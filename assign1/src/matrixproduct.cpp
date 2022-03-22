@@ -101,16 +101,13 @@ void OnMultLine(int m_ar, int m_br)
 
 	Time1 = clock();
 
-	for(j=0;j<m_br;j++){
-		for(i=0;i<m_ar;i++){
-			temp = 0;
+	for(int j=0;j<m_br;j++){
+		for(int i=0;i<m_ar;i++){
 			for(int k = 0; k < m_ar; k++){
-				temp += pha[i*m_ar + k] * phb[k*m_br + j];
+				phc[j*m_ar + k] += pha[j*m_ar + i] * phb[i*m_br + k];
 			}
-			phc[j*m_ar + i] = temp;
 		}
 	}
-
 	Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
 	cout << st;
@@ -156,7 +153,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
 	Time1 = clock();
 
-
+	
 	for(int ii = 0; ii < m_ar; ii += bkSize){
 		for (int jj = 0; jj < m_br; jj += bkSize){
 			for (int kk = 0; kk < bkSize; kk += bkSize){
@@ -167,6 +164,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 						for(int k = 0; k < bkSize; k++){
 							temp += pha[(ii + i) * m_ar + k + kk] * phb[(kk + k) * m_br + jj + j];
 						}
+						std::cout << temp << endl;
 						phc[(jj + j) * m_ar + i + ii] = temp;
 					}
 				}
@@ -174,6 +172,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 			}
 		}
 	}
+
 
 	Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
