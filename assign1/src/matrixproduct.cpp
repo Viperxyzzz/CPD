@@ -153,19 +153,24 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
 	Time1 = clock();
 
+	/*	for(int i = 0;i<m_br;i++){
+		for(int j=0;j<m_ar;j++){
+			for(int k = 0; k < m_ar; k++){
+				phc[i*m_ar + k] += pha[i*m_ar + j] * phb[j*m_br + k];
+			}
+		}
+	}*/
+
 	
 	for(int ii = 0; ii < m_ar; ii += bkSize){
 		for (int jj = 0; jj < m_br; jj += bkSize){
 			for (int kk = 0; kk < bkSize; kk += bkSize){
 
-				for(int j = 0; j < bkSize; j++){
-					for(int i = 0; i < bkSize; i++){
-						temp = 0;
+				for(int i = 0; i < bkSize; i++){
+					for(int j = 0; j < bkSize; j++){
 						for(int k = 0; k < bkSize; k++){
-							temp += pha[(ii + i) * m_ar + k + kk] * phb[(kk + k) * m_br + jj + j];
+							phc[(i + ii) * m_ar + k] += pha[(ii + i) * m_ar + (j + jj)] * phb[(jj +j) * m_br + kk + k];
 						}
-						std::cout << temp << endl;
-						phc[(jj + j) * m_ar + i + ii] = temp;
 					}
 				}
 				
