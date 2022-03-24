@@ -190,7 +190,11 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
 
 	Time2 = clock();
-	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+	double time = (double)(Time2 - Time1) / CLOCKS_PER_SEC;
+	sprintf(st, "Time: %3.3f seconds\n", time);
+	long long size = m_ar * m_ar * m_ar;
+	cout << "XD :DDDD " << size << endl;
+	cout << "Flops : " << (2 * (m_ar * m_ar * m_ar))  / time << endl;
 	cout << st;
 
 	// display 10 elements of the result matrix tto verify correctness
@@ -265,12 +269,6 @@ int main (int argc, char *argv[])
 
 	ret = PAPI_add_event(EventSet,PAPI_SR_INS);
 	if (ret != PAPI_OK) cout << "ERROR: PAPI_SR_INS" << endl;
-
-	ret = PAPI_add_event(EventSet,PAPI_FP_OPS);
-	if (ret != PAPI_OK) cout << "Erro lol xd " << endl;
-
-	ret = PAPI_add_event(EventSet,PAPI_FP_INS);
-	if (ret != PAPI_OK) cout << "errroooouuu" << endl;
 
 	op=1;
 	do {
