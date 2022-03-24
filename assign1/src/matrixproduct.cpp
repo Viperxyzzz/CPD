@@ -144,39 +144,49 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 	for(i=0; i<m_ar; i++)
 		for(j=0; j<m_ar; j++)
 			pha[i*m_ar + j] = (double)1.0;
-
-
-
+	
 	for(i=0; i<m_br; i++)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
 
 	Time1 = clock();
-
-	/*	for(int i = 0;i<m_br;i++){
-		for(int j=0;j<m_ar;j++){
-			for(int k = 0; k < m_ar; k++){
-				phc[i*m_ar + k] += pha[i*m_ar + j] * phb[j*m_br + k];
-			}
-		}
-	}*/
-
 	
 	for(int ii = 0; ii < m_ar; ii += bkSize){
 		for (int jj = 0; jj < m_br; jj += bkSize){
+			/*
 			for (int kk = 0; kk < bkSize; kk += bkSize){
-
+					*/
 				for(int i = 0; i < bkSize; i++){
 					for(int j = 0; j < bkSize; j++){
 						for(int k = 0; k < bkSize; k++){
-							phc[(i + ii) * m_ar + k] += pha[(ii + i) * m_ar + (j + jj)] * phb[(jj +j) * m_br + kk + k];
+							phc[(i + ii) * m_ar + k] += pha[(ii + i) * m_ar + (j + jj)] * phb[(jj +j) * m_br + k];
 						}
 					}
 				}
 				
-			}
+			
 		}
 	}
+	/*
+	int N = m_ar;
+	int stride = bkSize;
+	for(int ii=0; ii<N; ii+=stride)
+	{
+		for(int jj=0; jj<N; jj+=stride)
+		{
+			for(int kk=0; kk<N; kk+=stride)
+			{
+				for(int i=ii; i<ii+stride; ++i)
+				{
+					for(int j=jj; j<jj+stride; ++j)
+					{
+						for(int k=kk; k<kk+stride; ++k) phc[i * m_ar + j] += pha[i*m_ar + k]*phb[k * m_ar + j];
+					}
+				}               
+			}
+		}
+	}P*/
+
 
 
 	Time2 = clock();
@@ -249,6 +259,19 @@ int main (int argc, char *argv[])
 	if (ret != PAPI_OK) cout << "ERROR: PAPI_L2_DCM" << endl;
 
 
+	ret = PAPI_add_event(EventSet,PAPI_LD_INS);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_LD_INS" << endl;
+
+
+	ret = PAPI_add_event(EventSet,PAPI_SR_INS);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_SR_INS" << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_FP_OPS);
+	if (ret != PAPI_OK) cout << "Erro lol xd " << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_FP_INS);
+	if (ret != PAPI_OK) cout << "errroooouuu" << endl;
+
 	op=1;
 	do {
 		cout << endl << "1. Multiplication" << endl;
@@ -286,6 +309,13 @@ int main (int argc, char *argv[])
   		if (ret != PAPI_OK) cout << "ERROR: Stop PAPI" << endl;
   		printf("L1 DCM: %lld \n",values[0]);
   		printf("L2 DCM: %lld \n",values[1]);
+
+
+		double sum = values[2] + values[3];
+
+
+		cout << "L1 data cache hit rate: " << 1.0 - (values[0] / sum) << endl; 
+
 
 		ret = PAPI_reset( EventSet );
 		if ( ret != PAPI_OK )
