@@ -4,13 +4,16 @@
 #include <time.h>
 #include <cstdlib>
 #include <papi.h>
+#include <math.h>
+#include <string.h>
+#include <fstream>
 
 using namespace std;
 
 #define SYSTEMTIME clock_t
 
  
-void OnMult(int m_ar, int m_br) 
+void OnMult(int m_ar, int m_br,ofstream& file) 
 {
 	
 	SYSTEMTIME Time1, Time2;
@@ -56,7 +59,8 @@ void OnMult(int m_ar, int m_br)
     Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
 	cout << st;
-
+	file << st;
+	file << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
 	for(i=0; i<1; i++)
@@ -73,7 +77,7 @@ void OnMult(int m_ar, int m_br)
 }
 
 // add code here for line x line matriz multiplication
-void OnMultLine(int m_ar, int m_br)
+void OnMultLine(int m_ar, int m_br, ofstream& file)
 {
 	SYSTEMTIME Time1, Time2;
 	
@@ -111,7 +115,8 @@ void OnMultLine(int m_ar, int m_br)
 	Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
 	cout << st;
-
+	file << st;
+	file << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
 	for(i=0; i<1; i++)
@@ -126,7 +131,7 @@ void OnMultLine(int m_ar, int m_br)
 }
 
 // add code here for block x block matriz multiplication
-void OnMultBlock(int m_ar, int m_br, int bkSize)
+void OnMultBlock(int m_ar, int m_br, int bkSize,ofstream& file)
 {
 	SYSTEMTIME Time1, Time2;
 	
@@ -176,13 +181,13 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
 
 	Time2 = clock();
-	double time = (double)(Time2 - Time1) / CLOCKS_PER_SEC;
-	sprintf(st, "Time: %3.3f seconds\n", time);
+	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
 	long long size = m_ar * m_ar * m_ar 	;
-	cout << "XD :DDDD " << size << endl;
-	cout << "Flops : " << (2 * (m_ar * m_ar * m_ar))  / time << endl;
+	cout << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
+	
 	cout << st;
-
+	file << st;
+	file << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
 	for(i=0; i<1; i++)
@@ -222,7 +227,6 @@ void init_papi() {
 
 int main (int argc, char *argv[])
 {
-
 	char c;
 	int lin, col, blockSize;
 	int op;
@@ -256,6 +260,10 @@ int main (int argc, char *argv[])
 	ret = PAPI_add_event(EventSet,PAPI_SR_INS);
 	if (ret != PAPI_OK) cout << "ERROR: PAPI_SR_INS" << endl;
 
+	ret = PAPI_add_event(EventSet,PAPI_PRF_DM);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_PRF_DM" << endl;
+	
+
 	op=1;
 	do {
 		cout << endl << "1. Multiplication" << endl;
@@ -269,22 +277,23 @@ int main (int argc, char *argv[])
    		cin >> lin;
    		col = lin;
 
-
+		string filename = to_string(op) + " - " + to_string(lin) + "x" + to_string(lin);
+		ofstream myFile(filename);
 		// Start counting
 		ret = PAPI_start(EventSet);
 		if (ret != PAPI_OK) cout << "ERROR: Start PAPI" << endl;
 
 		switch (op){
 			case 1: 
-				OnMult(lin, col);
+				OnMult(lin, col,myFile);
 				break;
 			case 2:
-				OnMultLine(lin, col);  
+				OnMultLine(lin, col,myFile);  
 				break;
 			case 3:
 				cout << "Block Size? ";
 				cin >> blockSize;
-				OnMultBlock(lin, col, blockSize);  
+				OnMultBlock(lin, col, blockSize,myFile);  
 				break;
 
 		}
@@ -293,12 +302,14 @@ int main (int argc, char *argv[])
   		if (ret != PAPI_OK) cout << "ERROR: Stop PAPI" << endl;
   		printf("L1 DCM: %lld \n",values[0]);
   		printf("L2 DCM: %lld \n",values[1]);
-
+		myFile << "L1 DCM: " << values[0] << endl;
+  		myFile << "L2 DCM: " << values[1] << endl;
 
 		double sum = values[2] + values[3];
 
 
-		cout << "L1 data cache hit rate: " << 1.0 - (values[0] / sum) << endl; 
+		cout << "L1 data cache hit rate: " << 1.0 - (values[0] / sum) << endl;
+		myFile << "L1 data cache hit rate: " << 1.0 - (values[0] / sum) << endl;
 
 
 		ret = PAPI_reset( EventSet );
