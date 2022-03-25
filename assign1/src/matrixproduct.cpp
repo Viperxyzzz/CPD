@@ -148,51 +148,37 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 	for(i=0; i<m_br; i++)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
+	
+
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phc[i*m_br + j] = (double)0.0;
+
 
 	Time1 = clock();
 	
 	for(int ii = 0; ii < m_ar; ii += bkSize){
 		for (int jj = 0; jj < m_br; jj += bkSize){
-			/*
-			for (int kk = 0; kk < bkSize; kk += bkSize){
-					*/
-				for(int i = 0; i < bkSize; i++){
-					for(int j = 0; j < bkSize; j++){
-						for(int k = 0; k < bkSize; k++){
-							phc[(i + ii) * m_ar + k] += pha[(ii + i) * m_ar + (j + jj)] * phb[(jj +j) * m_br + k];
+			for(int kk = 0; kk < m_br; kk += bkSize){
+				for(int i = ii; i < ii + bkSize; i++){
+						for(int j = jj; j < jj + bkSize; j++){
+							for(int k = kk; k < kk + bkSize; k++){
+								phc[i * m_ar + k] += pha[i * m_ar + j] * phb[j * m_br + k];
+							}
 						}
 					}
 				}
-				
-			
-		}
-	}
-	/*
-	int N = m_ar;
-	int stride = bkSize;
-	for(int ii=0; ii<N; ii+=stride)
-	{
-		for(int jj=0; jj<N; jj+=stride)
-		{
-			for(int kk=0; kk<N; kk+=stride)
-			{
-				for(int i=ii; i<ii+stride; ++i)
-				{
-					for(int j=jj; j<jj+stride; ++j)
-					{
-						for(int k=kk; k<kk+stride; ++k) phc[i * m_ar + j] += pha[i*m_ar + k]*phb[k * m_ar + j];
-					}
-				}               
 			}
 		}
-	}P*/
+
+
 
 
 
 	Time2 = clock();
 	double time = (double)(Time2 - Time1) / CLOCKS_PER_SEC;
 	sprintf(st, "Time: %3.3f seconds\n", time);
-	long long size = m_ar * m_ar * m_ar;
+	long long size = m_ar * m_ar * m_ar 	;
 	cout << "XD :DDDD " << size << endl;
 	cout << "Flops : " << (2 * (m_ar * m_ar * m_ar))  / time << endl;
 	cout << st;
