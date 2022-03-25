@@ -40,6 +40,11 @@ void OnMult(int m_ar, int m_br,ofstream& file)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
 
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phc[i*m_br + j] = (double)(i+1);
+
+
 
 
     Time1 = clock();
@@ -101,6 +106,10 @@ void OnMultLine(int m_ar, int m_br, ofstream& file)
 	for(i=0; i<m_br; i++)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
+
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phc[i*m_br + j] = (double)(i+1);
 
 
 	Time1 = clock();
@@ -276,23 +285,26 @@ int main (int argc, char *argv[])
 		printf("Dimensions: lins=cols ? ");
    		cin >> lin;
    		col = lin;
-
+		ofstream myFile;
 		string filename = to_string(op) + " - " + to_string(lin) + "x" + to_string(lin);
-		ofstream myFile(filename);
-		// Start counting
+			// Start counting
 		ret = PAPI_start(EventSet);
 		if (ret != PAPI_OK) cout << "ERROR: Start PAPI" << endl;
 
 		switch (op){
-			case 1: 
+			case 1:
+				myFile.open(filename);
 				OnMult(lin, col,myFile);
 				break;
 			case 2:
+				myFile.open(filename);
 				OnMultLine(lin, col,myFile);  
 				break;
 			case 3:
 				cout << "Block Size? ";
 				cin >> blockSize;
+				string newFilename = to_string(op) + " - " + to_string(lin) + "x" + to_string(lin) + " bkSize: " + to_string(blockSize);
+				myFile.open(newFilename);
 				OnMultBlock(lin, col, blockSize,myFile);  
 				break;
 
