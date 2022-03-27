@@ -4,13 +4,16 @@
 #include <time.h>
 #include <cstdlib>
 #include <papi.h>
+#include <math.h>
+#include <string.h>
+#include <fstream>
 
 using namespace std;
 
 #define SYSTEMTIME clock_t
 
  
-void OnMult(int m_ar, int m_br) 
+void OnMult(int m_ar, int m_br,ofstream& file) 
 {
 	
 	SYSTEMTIME Time1, Time2;
@@ -37,6 +40,11 @@ void OnMult(int m_ar, int m_br)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
 
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phc[i*m_br + j] = (double)(i+1);
+
+
 
 
     Time1 = clock();
@@ -56,7 +64,8 @@ void OnMult(int m_ar, int m_br)
     Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
 	cout << st;
-
+	file << st;
+	file << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
 	for(i=0; i<1; i++)
@@ -73,7 +82,7 @@ void OnMult(int m_ar, int m_br)
 }
 
 // add code here for line x line matriz multiplication
-void OnMultLine(int m_ar, int m_br)
+void OnMultLine(int m_ar, int m_br, ofstream& file)
 {
 	SYSTEMTIME Time1, Time2;
 	
@@ -97,6 +106,10 @@ void OnMultLine(int m_ar, int m_br)
 	for(i=0; i<m_br; i++)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
+
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phc[i*m_br + j] = (double)(i+1);
 
 
 	Time1 = clock();
@@ -111,7 +124,8 @@ void OnMultLine(int m_ar, int m_br)
 	Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
 	cout << st;
-
+	file << st;
+	file << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
 	for(i=0; i<1; i++)
@@ -126,7 +140,7 @@ void OnMultLine(int m_ar, int m_br)
 }
 
 // add code here for block x block matriz multiplication
-void OnMultBlock(int m_ar, int m_br, int bkSize)
+void OnMultBlock(int m_ar, int m_br, int bkSize,ofstream& file)
 {
 	SYSTEMTIME Time1, Time2;
 	
@@ -144,45 +158,45 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 	for(i=0; i<m_ar; i++)
 		for(j=0; j<m_ar; j++)
 			pha[i*m_ar + j] = (double)1.0;
-
-
-
+	
 	for(i=0; i<m_br; i++)
 		for(j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
+	
+
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phc[i*m_br + j] = (double)0.0;
+
 
 	Time1 = clock();
-
-	/*	for(int i = 0;i<m_br;i++){
-		for(int j=0;j<m_ar;j++){
-			for(int k = 0; k < m_ar; k++){
-				phc[i*m_ar + k] += pha[i*m_ar + j] * phb[j*m_br + k];
-			}
-		}
-	}*/
-
 	
 	for(int ii = 0; ii < m_ar; ii += bkSize){
 		for (int jj = 0; jj < m_br; jj += bkSize){
-			for (int kk = 0; kk < bkSize; kk += bkSize){
-
-				for(int i = 0; i < bkSize; i++){
-					for(int j = 0; j < bkSize; j++){
-						for(int k = 0; k < bkSize; k++){
-							phc[(i + ii) * m_ar + k] += pha[(ii + i) * m_ar + (j + jj)] * phb[(jj +j) * m_br + kk + k];
+			for(int kk = 0; kk < m_br; kk += bkSize){
+				for(int i = ii; i < ii + bkSize; i++){
+						for(int j = jj; j < jj + bkSize; j++){
+							for(int k = kk; k < kk + bkSize; k++){
+								phc[i * m_ar + k] += pha[i * m_ar + j] * phb[j * m_br + k];
+							}
 						}
 					}
 				}
-				
 			}
 		}
-	}
+
+
+
 
 
 	Time2 = clock();
 	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+	long long size = m_ar * m_ar * m_ar 	;
+	cout << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
+	
 	cout << st;
-
+	file << st;
+	file << "Flops : " << (2 * (m_ar * m_ar * m_ar)) / (double)(Time2 - Time1) / CLOCKS_PER_SEC << endl;
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
 	for(i=0; i<1; i++)
@@ -222,7 +236,6 @@ void init_papi() {
 
 int main (int argc, char *argv[])
 {
-
 	char c;
 	int lin, col, blockSize;
 	int op;
@@ -249,6 +262,17 @@ int main (int argc, char *argv[])
 	if (ret != PAPI_OK) cout << "ERROR: PAPI_L2_DCM" << endl;
 
 
+	ret = PAPI_add_event(EventSet,PAPI_LD_INS);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_LD_INS" << endl;
+
+
+	ret = PAPI_add_event(EventSet,PAPI_SR_INS);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_SR_INS" << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_PRF_DM);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_PRF_DM" << endl;
+	
+
 	op=1;
 	do {
 		cout << endl << "1. Multiplication" << endl;
@@ -261,23 +285,27 @@ int main (int argc, char *argv[])
 		printf("Dimensions: lins=cols ? ");
    		cin >> lin;
    		col = lin;
-
-
-		// Start counting
+		ofstream myFile;
+		string filename = to_string(op) + " - " + to_string(lin) + "x" + to_string(lin);
+			// Start counting
 		ret = PAPI_start(EventSet);
 		if (ret != PAPI_OK) cout << "ERROR: Start PAPI" << endl;
 
 		switch (op){
-			case 1: 
-				OnMult(lin, col);
+			case 1:
+				myFile.open(filename);
+				OnMult(lin, col,myFile);
 				break;
 			case 2:
-				OnMultLine(lin, col);  
+				myFile.open(filename);
+				OnMultLine(lin, col,myFile);  
 				break;
 			case 3:
 				cout << "Block Size? ";
 				cin >> blockSize;
-				OnMultBlock(lin, col, blockSize);  
+				string newFilename = to_string(op) + " - " + to_string(lin) + "x" + to_string(lin) + " bkSize: " + to_string(blockSize);
+				myFile.open(newFilename);
+				OnMultBlock(lin, col, blockSize,myFile);  
 				break;
 
 		}
@@ -286,6 +314,15 @@ int main (int argc, char *argv[])
   		if (ret != PAPI_OK) cout << "ERROR: Stop PAPI" << endl;
   		printf("L1 DCM: %lld \n",values[0]);
   		printf("L2 DCM: %lld \n",values[1]);
+		myFile << "L1 DCM: " << values[0] << endl;
+  		myFile << "L2 DCM: " << values[1] << endl;
+
+		double sum = values[2] + values[3];
+
+
+		cout << "L1 data cache hit rate: " << 1.0 - (values[0] / sum) << endl;
+		myFile << "L1 data cache hit rate: " << 1.0 - (values[0] / sum) << endl;
+
 
 		ret = PAPI_reset( EventSet );
 		if ( ret != PAPI_OK )
