@@ -1,0 +1,440 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="cpd-proj.css">
+<title>CPD: Project 2</title>
+<meta name="generator" content="Bluefish 2.2.7" >
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8">
+<meta http-equiv="content-style-type" content="text/css">
+<meta http-equiv="expires" content="0">
+
+<! For code highlighting>
+
+<link rel="stylesheet" href="highlight.default.min.css">
+<script src="./js/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+</head>
+<body>
+<h1>Parallel and Distributed Computation - 2nd Semester<br>
+	Proj. 2: Distributed and Partitioned Key-Value Store <br>
+</h1>
+<h3>Deadline: 27-05-2022</h3>
+<hr/>
+<h2 id="Overview">1. Overview</h2>
+<p>In the second project you will develop a distributed key-value persistent store for a large cluster.</p>
+
+<p>A key-value store is a simple storage system that stores arbitrary data objects, the <b>values</b>, each of which is accessed by means of a <b>key</b>, very much like in a hash table. To ensure persistency, the data items and their keys must be stored in persistent storage, e.g. a hard disk drive (HDD) or a solid state disk (SSD), rather than in RAM.</p>
+
+<p>By <b>distributed</b>, we mean that the data items in the key-value store are <b>partitioned</b> among different cluster nodes.</p>
+
+<p>Our design is loosely based on <a href="https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf">Amazon's Dynamo</a>, in that it uses <b>consistent-hashing</b> to partition the key-value pairs among the different nodes. This will be described later, but we recommend that you read the paper, as it may give you ideas to solve some of the challenges you will find.</p>
+
+<p>The service is expected be able to handle concurrent requests and to tolerate:</p>
+<ol>
+    <li>node crashes, and</li>
+    <li><!--network partitions and -->message loss.</li>
+</ol>
+
+<p>In addition to implement the data-store nodes, you are expected to implement a test client, also specified below.</p>
+
+<h3>1.1 Document organization</h3>
+<p>This specification has several sections:</p>
+
+<dl>
+<dt>Section 2: <a href="#Service">Service</a></dt>
+<dd>Describes the service and summarizes the interface must provide for a testing client.</dd>    
+<dt>Section 3: <a href="#MembershipSrvc">Membership Service</a></dt>
+<dd>Specifies the cluster membership service and respective protocol that must be provided by every cluster node.s</dd>
+<dt>Section 4: <a href="#KVStore">Key-Value Store</a></dt>
+<dd>Specifies the service for storing key-value pairs in a distributed and partitioned way.</dd>
+<dt>Section 5: <a href="#Replication">Replication</a></dt>
+<dd>Discusses the use of replication to increase availability. You may wish to implement replication to increase your project's grade.</dd>
+<dt>Section 6: <a href="#FaultTolerance">Fault-Tolerance</a></dt>
+<dd>Discusses some failure scenarios that you may wish to address to increase your project's grade.</dd>
+<dt>Section 7: <a href="#TestClient">Test-Client</a></dt>
+<dd>Specifies a client for testing your code.</dd>
+<dt>Section 8: <a href="#Implementation">Implementation Aspects</a></dt>
+<dd>Discusses some points that are relevant to the implementation.</dd>
+<dt>Section 9: <a href="#Final">Final Considerations</a></dt>
+<dd>Among other topics, specifies what you must submit and how, and describes the grading criteria.</dd>
+<dt>Appendix A: <a href="#MessageSyntax">Generic Char-Based Message Syntax</a></dt>
+<dd>Describes a generic char-based message syntax that you can use to specify the syntax of the messages of the different protocols.</dd>
+<dt></dt>
+<dd></dd>
+</dl>
+
+<h2 id="Service">2. Service</h2>
+
+<p>Each node must provides two interfaces.</p>
+
+<h3>2.1 Key-Value Store Interface</h3>
+
+<p>A key-value persistent store provides essentially three operations:</p>
+
+<dl>
+<dt><code>put(key, value)</code></dt>
+<dd>which adds a key-value pair to the store</dd>
+<dt><code>get(key)</code></dt>
+<dd>which retrieves the value bound to a key</dd>
+<dt><code>delete(key)</code></dt>
+<dd>which deletes a key-value pair</dd>
+</dl>
+
+<h3 id="MemberInterface">2.2 Cluster Membership Interface</h3>
+
+<p>This interface allows to add/remove nodes to the cluster:</p>
+<dl>
+<dt><code>join()</code></dt>
+<dd>which adds a node to the cluster</dd>
+<dt>leave()</dt>
+<dd>which removes a node from the cluster</dd>
+</dl>
+
+<h3 id="service_invocation">2.3 Service Invocation</h3>
+
+<p>A service node should be invoked as follows.</p>
+
+<pre><code class="language-shell">$ java Store &lt;IP_mcast_addr&gt; &lt;IP_mcast_port&gt; &lt;node_id&gt;  &lt;Store_port&gt;</code></pre>
+
+<p>where:</p>
+
+<dl>
+<dt><b>&lt;IP_mcast_addr&gt;</b></dt>
+<dd>is the address of the IP multicast group used by the <a href="#MembershipSrvc">membership service</a></dd>
+<dt><b> &lt;IP_mcast_port&gt;</b></dt>
+<dd>is the port number of the IP multicast group used by the <a href="#MembershipSrvc">membership service</a></dd>
+<dt><b>&lt;node_id&gt;</b></dt>
+<dd>This is the node's id and it must be unique in a cluster. Ideally, it would be the IP address, but we are not sure if you can use multiple loopback IP addresses in Windows. (This would allow you to test your project by running multiple nodes on the same host, each of which with its own loopback IP address.)</dd>
+<dt><b>&lt;Store_port&gt;</b></dt>
+<dd>is the port number used by the storage service</dd>
+</dl>
+
+<h2 id="MembershipSrvc">3. Membership Service</h2>
+
+<p>One of the main issues in a key-value distributed store is to find the node responsible for a key, i.e. where the key-value pair is or should be stored.</p>
+
+<p>The algorithm that your storage system shall implement requires every node to know every other node in the cluster. To keep this information, the cluster nodes run a distributed membership service and protocol.</p>
+
+<p>The operations supported by the membership service are described in <a href="#MemberInterface">Section 2.2</a>. These operations are triggered by the cluster administrator.</p>
+
+<p>The membership protocol strives to keep the membership information at the nodes up-to-date, even in the presence of node crashes<!-- or network partitions-->.</p>
+
+<h3>3.1 Membership Protocol</h3>
+
+<!--p>The membership protocol uses IP multicast.</p-->
+
+<p>Every time a node joins or leaves the cluster, the node must send via <b>IP multicast</b> a <code>JOIN/LEAVE</code> message, respectively. These messages must include the value of a <b>membership counter</b>, which is initially 0, when the node joins for the first time, and that is increased by one every time the node leaves or joins the cluster. Thus, an even value counter means that the node is joining the cluster, whereas an odd value counter means that the node is leaving the cluster. The membership counter must survive node crashes and therefore should be stored in non-volatile memory.
+</p>
+
+<p>Upon receiving a <code>JOIN/LEAVE</code> message, a cluster node updates its view of the cluster membership, and adds the respective event (either join or leave) to a <b>membership log</b>. Each record in this log includes only the node's id and the value of the membership counter. </p>
+
+<p>A node joining the cluster must initialize the cluster membership. To perform this initialization, some of the cluster members will send the new member a <code>MEMBERSHIP</code> message, including its view of the membership, i.e. a list of the current cluster members, as well as the most recent 32 membership events in its log. This transfer of membership information must be done using TCP. Before sending the <code>JOIN</code> message, the new member starts accepting connections on a port whose number it sends in its <code>JOIN</code> message. Upon receiving the <code>JOIN</code> message a cluster member waits for a random time length, after which it sends the membership information. To prevent the new member from being flooded with <code>MEMBERSHIP</code> messages, it stops accepting connections after receiving 3 of them.</p>
+
+<p>In order to avoid the propagation of stale information, these <code>MEMBERSHIP</code> messages should be sent by nodes whose membership information is up-to-date. (It is up to you to determine how this can be done with high probability.)</p>
+
+<p>If a node joining the cluster does not receive the <code>MEMBERSHIP</code> message from 3 other nodes, it should retransmit the <code>JOIN</code> message, up to a total, i.e. including the initial message, of 3 times. Nodes that have already replied wiht a <code>MEMBERSHIP</code> message successfully, should not resend it, unless there was another membership change meanwhile.</p>
+
+<p>Because of failures, nodes may miss membership change messages. Therefore, every so often, say 1 second, one of the cluster nodes must multicast a <code>MEMBERSHIP</code> message with the most recent 32 membership events in its log. Upon receiving such a message, a node updates its membership event log as well as its cluster membership.</p>
+
+<p>Again, the membership protocol should strive to prevent nodes with stale membership information from multicasting these <code>MEMBERSHIP</code> (with high probability.)</p>
+
+<p>The membership log does not need to keep more than one event per node: that node's event with the largest membership counter. Compaction of the log, i.e. removal of redundant events, is useful to reduce the amount of disk storage. But even if nodes do not compact the log in non-volatile storage, they should not include redundant events in the messages of the membership protocol. </p>
+
+<p>Note that above we did not describe how a node determines the cluster membership from the protocol messages. It is up to you to decide. We expect you to document this aspect of your design in the report.</p>
+
+<p>A simple multi-threaded implementation of the membership protocol is worth up to 30%.</p>
+
+<h4>Message format</h4>
+
+<p>You can specify the message format that you see fit. However, all messages should be char-based, i.e. they should be human readable without further processing. The Appendix specifies a generic message format that we used in one project in another course. You can use it, or adapt it, if you wish.</p>
+
+<h2 id="KVStore">4. Key-value Store</h2>
+
+<p>The key-value store is implemented as a distributed partitioned hash table in which each cluster node stores the key-value pairs in a bucket.</p>
+
+<p>The key-value store shall use SHA-256 to generate keys. Therefore, you can assume that there are no hash collisions.</p>
+
+<p>To partition the key-value pairs among the nodes in the cluster, the key-store uses <b>consistent hashing</b>. Consistent hashing is a hashing technique that allows to resize a hash table, i.e. change the number of buckets, without remapping all the keys in the table. This is important to the efficiency of the cluster reorganization upon node joining/leaving.</p>
+
+<figure>
+<img src="consistent_hashing.png" alt="Consistent hashing"> 
+<figcaption>Fig. 1- Consistent hashing.</figcaption>
+</figure>
+<p>The idea is illustrated in Fig. 1. The hash function used to compute the keys is also used to hash the id of each node in the cluster. A key-value pair is assigned to the node whose <b>hashed id</b> is <b>closest</b> to the pair's key. The distance between hash values, either keys or hashed ids, is measured assuming that they are layed out on a circumference increasing clockwise, so that hash value <code>0</code> follows hash value <code>2<sup>H</sup> - 1</code>, where <code>H</code> is the number of bits of the hash value. Furthermore, the distance is measured clockwise. Obviously, the distance between value <code>n</code> and itself is zero. Thus, for example, given nodes whose ids are hashed to <code>n-1</code> and <code>n+2</code>, modulo <code>2<sup>H</sup></code>, the node closest to key <code>n</code>, also known as <code>n</code>'s <b>successor</b>, is the node whose hashed id is <code>n+2</code>. We use the same rule to compare the hashed ids of two nodes and to define the successor of a node.</p>
+
+<p>Summarizing, in the key-value store, we have as many buckets as cluster nodes, and a key-value pair is mapped to the bucket of the node whose hashed id is the successor of the pair's key.</p>
+
+<!--p>To generate the id of a node for consistent hashing, you should hash the cluster's node id, wich is passed as a command line argument. (See <a href="#service_invocation">Section 2.3</a>.)</p-->
+
+<p>Given the cluster membership,  a node can use <b>binary search</b> to efficiently find the node responsible for the key. It should then send the operation request (<code>put</code>, <code>get</code> or <code>delete</code>) to that node, using TCP.
+</p>
+
+<p>Upon a membership change, nodes may have to transfer keys to other nodes. Upon:</p>
+
+<dl>
+<dt><b>a join event</b></dt>
+<dd>the successor of the joining node should transfer to the latter the keys that are smaller or equal to the id of the joining node;</dd>
+<dt><b>a leave event</b></dt>
+<dd>before leaving the cluster, i.e. multicasting the <code>LEAVE</code> message, the node should transfer its key-value pairs to its successor.</dd> 
+</dl>
+
+<p>It is up to you to design the protocol for transfering key-value pairs upon a membership event, but this protocol should use TCP. We expect you to document this protocol in the project's report.</p>
+
+<p>Membership changes and key-value pairs' transfer should be carefully coordinated to ensure that other nodes can find the key-value pairs. (See the discussion below under fault-tolerance.)</p>
+
+<p>A simple multithreaded implementation of the storage service described in this section up to this point is worth up to 30%.</p>
+
+<h4>Enhancement</h4>
+
+<p>For key-value stores with many keys or large objects, the transfer of the key-value pairs from one node to another may take a lot of time. Delaying the handling of requests on the keys of these pairs while the transfer is ongoing, may lead to extended periods of unavailability. </p>
+
+<p>Addressing this issue will give you extra credit (up to 5%). Note however, that this enhancement makes sense only if you do not implement <a href="#replication">replication</a>. You are expected to document your implementation in the project's report.</p>
+
+<p><b>Warning:</b> Your solution must avoid race-conditions.</p>
+
+<h2 id="Replication">5. Replication</h2>
+
+<p>The above description does not consider replication. Thus, if the node that stores a key-value pair goes down, that key-value pair becomes unavailable.</p>
+
+<p>To increase availability, key-value pairs should be replicated with a replication factor of 3, i.e. each key-value pair should be stored in 3 different cluster nodes.</p>
+
+<p>The actual number of copies created upon a <code>put</code> can be smaller than 3, e.g. because a node is down<!-- or because of a network partition-->. Your implementation should strive to ensure that the number of copies is equal to the replication factor as soon as possible after healing of the fault.</p>
+
+<p>Replication may lead to the execution of operations in different order in different replicas. E.g. a replica may process a <code>delete</code> operation on a key before the respective <code>put</code>. Another issue is the possibility of a node missing a <code>delete</code> operation and later try to replicate the deleted key-pair on the other replicas, upon realizing that the number of copies of the pair is lower than the replication factor. A common solution to handle this issue is the use of <b>"tombstones"</b> for deletion. A "tombstone" is a special key-pair, or marker, indicating that a pair with the corresponding key has been deleted. Thus, instead of removing the key-value pair upon its deletion, you should replace it with its "tombstone".</p>
+
+<p>Handling replication, is worth up to 20% of your final grade.</p>
+
+<h2 id="FaultTolerance">6. Fault-Tolerance</h2>
+
+<p>In the specification of the protocols we have strived to cover many common failure scenarios, given our failure model. However, we do not cover all the scenarios. </p>
+
+<p>For example, if a node is down for a long time and it misses many membership events, the periodic <code>MEMBERSHIP</code> messages may not be enough for the node to learn the current membership of the cluster.</p>
+
+<p>Another scenario is the possibility of the membership view of the node to which the client sent a request not being up-to-date and, therefore, the operation request will be sent to the wrong node, i.e. a node that is not responsible for the key.</p>
+
+<p>Making your store tolerant to these failure scenarios or others that you may find, will give you additional credit up to 10%.</p>
+
+<h2 id="TestClient">7. Test Client</h2>
+
+<p>To test your key-value store you shall develop a test client. Essentially, this test client will let you invoke any of the membership events (<code>join</code> or <code>leave</code>) as well as to invoke any of the operations on key-value pairs (<code>put</code>, <code>get</code> and <code>delete</code>).</p>
+
+<p>As mentioned above, every node should provide these two interfaces. Any node may process a request for any key. Thus a client needs only know one of the cluster nodes to be able to access the key-value store.</p>
+
+<p>The arguments of the key-value operations are as follows. In the case of a <code>put</code> it is the file pathname of the file with the value. The key is computed by the client, from the value, and should be printed to the standard output by the test client. For the other two operations, i.e. <code>get</code> and <code>delete</code> the argument is the key returned by <code>put</code>.</p>
+
+<p>The key-value operations should use TCP as the transport protocol.</p>
+
+<p>Membership change requests must be sent directly to the node that should join/leave the cluster.</p>
+
+<p>The membership operations can use any transport protocol. However, you will get up to 5%, if you use RMI.</p>
+
+<p>The maximum scores for the membership service and the key-value store service already include the test client, without which you cannot demonstrate your key-store service.</p>
+
+<h3>Invocation of the Test Client</h3>
+
+<p>The test client should be invoked as follows.</p>
+
+<pre><code class="language-shell">$ java TestClient &lt;node_ap&gt; &lt;operation&gt; [&lt;opnd&gt;]</code></pre>
+
+<p>where:</p>
+
+<dl>
+<dt><b>&lt;node_ap&gt;</b></dt>
+<dd>is the node's access point. This depends on the implementation. If the service uses UDP or TCP, the format of the access point must be <code>&lt;IP address&gt;:&lt;port number&gt;</code>, where <code>&lt;IP address&gt;</code> and <code>&lt;port number&gt;</code> are respectively the IP address and the port number being used by the node. If the service uses RMI, this must be the IP address and the name of the remote object providing the service.</dd>
+<dt><b> &lt;operation&gt;</b></dt>
+<dd>is the string specifying the operation the node must execute. It can be either a key-value operation, i.e. <code>"put"</code>, <code>"get"</code> or <code>"delete"</code>, or a membership operation, i.e. <code>"join"</code> or <code>"leave</code></dd>
+<dt><b>&lt;opnd&gt;</b></dt>
+<dd>is the argument of the operation. It is used only for key-value operations. In the case of:
+<dl>
+<dt><code>put</code></dt>
+<dd>is the file pathname of the file with the value to add</dd>
+<dt>otherwise (<code>get</code> or <code>delete</code>)</dt>
+<dd>is the string of hexadecimal symbols encoding the <code>sha-256</code> key returned by <code>put</code>, as described in the next section.
+</dd>
+</dl>
+</dd>
+</dl>
+
+<h2 id="Implementation">8. Implementation Aspects</h2>
+
+<p>You must implement this project using either the most recent version of Java SE, 18, or one of the still maintained LTS versions of Java, i.e. 8, 11 or 17.</p> 
+
+<p>Furthermore, you can use only Java SE packages. No other Java packages are allowed without our explicit permission. To get permission to use a package that does not belong to Java SE, you must submit a request via the <a href="https://moodle.up.pt/mod/forum/view.php?id=155911">project's Moodle forum</a>, and explain why you want to use that package. Our response to that request applies to all groups. To make it easier to track these requests, please use one message per package.</p>
+
+<p>Regardless, the values of every key-value pair must be stored in a file system file whose name is the respective key. This will allow you to more easily show that your implementation works as required.</p>
+
+<h4>Message syntax</h4>
+
+<p>You can use the message syntax that you see fit. However, all messages should be char-based, i.e. they should be human readable without further processing. The <a href="#MessageSyntax">Appendix</a> specifies a generic char-based message syntax that we used in one project in another course. You can use it, or adapt it, if you wish.</p>
+
+<h3>Encoding of Hash Values in Frames and Print Statements</h3>
+
+<p>As mentioned above, keys, and hashed node ids used for consistent hashing are values obtained using the <code>SHA-256</code> cryptographic hash function. Their length is 256 bit, i.e. 32 bytes, and must be encoded as 64 ASCII character sequences, as follows: each byte of the hash value is encoded by the two ASCII characters corresponding to the hexadecimal representation of that byte. E.g., a byte with value <code>0xB2</code> should be represented by the two char sequence <code>'B''2'</code> (or <code>'b''2'</code>, it does not matter). The entire hash is represented in big-endian order, i.e. from the MSB (byte 31) to the LSB (byte 0).</p>
+
+<h3>Filesystem Structure</h3>
+
+<p>In order to allow testing the several nodes on a single computer, each node should use its own filesystem folder to keep the values of the items it is responsible for. If all nodes share the same folder, we will not be able to check, by looking only at the filesystem, that your store behaves as expected.</p>
+
+<h3>Concurrency</h3>
+
+<p>Your implementation must be such that a node must be able to process several requests at the same time. An implementation based on <b>thread-pools</b> can increase your grade by up to 10%. You can also get an increase of 5% if you use <b>asynchronous I/O</b>. These two increases are additive.</p>
+
+<h2 id="Final">9. Final Considerations</h2>
+
+<h3>9.1 Development Strategy</h3>
+
+<p>Follow an incremental development approach: before starting the development of the functionality required by one operation, complete the implementation, of both the node and the client, of functionality (excluding enhancements) required by the previous operation.</p>
+
+<p>Try to implement operations that depend on others only after the latter. For example, you should implement <code>LEAVE</code> messages only after implementing <code>JOIN</code> messages.</p>
+
+<p>Implement the enhancements, i.e. the features that give you extra credit, only after completing all the protocols without enhancements.</p>
+
+<p>Nevertheless, we suggest that you partition the project as follows:</p>
+<ol>
+<li>Membership protocol, both node and client</li>
+<li>Key-value operations, both node and client</li>
+<li>Key-value transfer upon membership change</li>
+</ol>
+<p>and that you assign each of these parts to a different group member.</p>
+
+<p>Note that you can develop version of the key-value operations without previously implementing a membership protocol. E.g. the group membership can be static and your code can read it from a file.</p>
+
+<p>Likewise, you can develop a first version of the key-value transfer protocol without the membership protocol. Of course, in the final version, the key-value transfer protocol execution should be triggered by a membership event.</p>
+
+<h3>9.2 What and how to submit?</h3>
+
+<p>You must submit your project via the Gitlab service at FEUP, using the project that was already assigned to you. If, in the second project, your group comprises students that were in different groups in the first project, please ask your lab instructor to create a new group for you<!--fill the <a href="">this Google form <span class="comment pfs">missing link</span></a> with the information we need to create a new group for you.--></p>
+
+<p>For the second project you must use the directory named <code>proj2</code>. This directory has two subdirectories: <code>src</code> for Java source files and <code>doc</code> for documentation files.</p>
+
+<p>In the <code>doc</code> directory you must include a <code>README.txt</code> file with instructions for compiling and running your code.</p>
+
+<p>Under the same directory, you should also submit a report, a PDF file named <b><code>report.pdf</code></b>, with up to 8 pages. The report should focus on the features that increase the ceiling of your project (see the <a href="#grading">grading criteria</a>). Note that the report must include references to the code. If you just implemented the basic functionality using plain threads, all you need is to document the missing details, including the format of the messages that you have implemented, of 1) the membership protocol, and 2) the key-value storage service.</p>
+
+<p>You will get no credit for a feature that you have implemented but that you have not described in the report. Likewise, a poorly described feature will most likely get you a low score in that feature.</p>
+
+<h3>9.3 Demo</h3>
+
+<p> You will have to demo your work in the lab classes after the submission deadline.</p>
+
+<p>To streamline the demo, <b>you will be required to start both the nodes and the testing client from the command line.</b> We recommend that you write a simple script for that. The earlier you do it, the more time you will save invoking your programs during development.</p>
+
+<!--p>To encourage you following this approach, the demo setup is worth 5% of the project grade. <span class="comment pfs">What do you think about this? This is a lot, for something they should do anyway. But it may be useful to ensure that students do not waste too much time with the demo setup. What was your experience in the first project.</span></p-->
+
+<h3>9.4 Grading Criteria and Weights</h3>
+
+<p>A concurrent implementation of the basic protocols using plain threads is worth a maximum project grade of 60%, as shown by the following table:</p>
+
+<div align="center">
+    <table border="1" cellspacing="0" cellpading="1">
+    <thead>
+    <tr>
+        <th scope="col" rowspan="2">Criteria</th>
+        <th scope="col">Implementation</th>
+        <th scope="col" colspan="2">Report</th>
+        <th scope="col" rowspan="2">Weight</th>
+    </tr>
+    <tr>
+        <th scope="col" width=200">Features/Comments</th>
+        <th scope="col">Pages</th>
+        <th scope="col" width="250">What?</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <th scope="row"><a href="#MembershipSrvc">Membership Service</a></th>
+        <td>With avoidance of stale info</td>
+        <td>2-2.5</td>
+        <td>Must include message format and description (how and why) of missing 
+        details (including fault-tolerance).</td>
+        <td>30%</td>
+    </tr>
+    <tr>
+        <th scope="row" rowspan="2"><a href="#KVStore">Storage Service</a></th>
+        <td>Including pair transfer on membership changes</td>
+        <td>1.5-2</td>
+        <td>Must include message format and description (how and why) of missing 
+        details (including fault-tolerance).</td>
+        <td>30%</td>
+    </tr>
+    <tr>
+        <td>Pairs transfer <b>enhancement</b><br/>
+        Only without replication</td>
+        <td>0.5</td>
+        <td>How and why?</td>
+        <td>5%</td>        
+    </tr>
+    <tr>
+        <th scope="row"><a href="#Replication">Replication</a></th>
+        <td></td>
+        <td>1-1.5</td>
+        <td>How and why?<br/>
+        Implications on membership and storage services</td>
+        <td>20%</td>
+    </tr>
+    <tr>
+        <th scope="row"><a href="#FaultTolerance">Fault-tolerance</a></th>
+        <td>Other failure scenarios.</td>
+        <td>0.5-1</td>
+        <td>Only failures scenarios not addressed in Sections <a href="#MembershipSrvc">3</a> or <a href="#KVStore">4</a>. The scenarios described in these sections should be covered under the respective service.</td>
+        <td>10%</td>        
+    </tr> 
+    <tr>
+        <th scope="row" rowspan="2">Concurrency</th>
+        <td>Thread-pools</td>
+        <td>0.75-1</td>
+        <td> How and why?</td>
+        <td>10%</td>        
+    </tr>
+    <tr>
+        <td>Asynchronous I/O</td>
+        <td>0.75-1</td>
+        <td>How and why "minimizes" number of threads.</td>
+        <td>5%</td>
+        </tr>
+    <tr>
+        <th scope="row">RMI</th>
+        <td></td>
+        <td>0</td>
+        <td>Reference to Java source file with definition of the remote interface.<br/>
+        Should be included as a subsection of the section on the membership service.</td>
+        <td>5%</td>       
+    </tr>
+    </tbody>
+    </table>
+</div>
+
+<p>The two columns under "Report" are the number of estimated pages and the contents of report for each of the criteria. Note that the total size of the report exceeds the maximum 8 pages. This is because the total weight exceeds 100%, therefore you need not to implement all the features that give you a maximum score on each criteria. Actually, you may get 100% even if your score on some criteria, for example Asynchronous I/O, is 0. In addition, the "pairs transfer enhancement" and replication are mutually exclusive.</p>
+
+<h2 id="MessageSyntax">Appendix A: Generic Char-Based Message Syntax</h2>
+
+<p>This appendix specifies a generic syntax for char-based messages that was used in a similar project of another course. This generic syntax was then used to instantiate the syntax of different messages of different protocols.</p>
+
+<p>The generic message is composed by two parts: a header and the body. The header contains essentially control information, whereas the body is used for the data and may be optional, or even be omitted, for some messages.</p>
+
+<h4>Header</h4>
+
+<p>The header consists of a sequence of ASCII lines and terminates with an empty header line. Each ASCII line is a  sequence of printable ASCII codes <b>terminated with the sequence <code>'0xD''0xA'</code></b>, the ASCII codes of the CR and LF chars respectively, which we denote by <code>&lt;CRLF&gt;</code>. Each header line is a sequence of fields, sequences of printable ASCII codes, separated by spaces, the ASCII char <code>' '</code>. <b>Note that:</b>
+<ol>
+<li>there may be more than one space between fields;</li>
+<li>there may be zero or more spaces after the last field in a line;</li>
+<li>the header always terminates with an empty header line. I.e. the <code>&lt;CRLF&gt;</code> of the last header line is followed <b>immediately by another <code>&lt;CRLF&gt;</code> without any character, white spaces included, in between.</b></li>
+</ol>
+</p>
+
+<p>Using this generic header syntax you can define the syntax of different messages of possibly different protocols, by specifying for each message:</p>
+<ul>
+<li>the number of non-empty header lines</li>
+<li>the fields (both their semantics and their syntax) of each of these header lines</li>
+</ul>
+
+<h4>Body</h4>
+
+<p>When present, the body contains data. The protocols must not interpret the contents of the <code>Body</code>. For the protocols its value is just a byte sequence. You <b>must not</b> encode it.</p>
+
+
+<hr>
+</body>
+</html>
