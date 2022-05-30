@@ -29,14 +29,14 @@ public class Store {
     private static void starTCPforTestClient(InetAddress node_id, int port) {
         TCPServer server = new TCPServer(port+1000, node_id);
         new Thread(server).start();
-        System.out.println("this is the new verison");
+        System.out.println("Receiving messages from test client");
 
     }
 
     private static void startTCP(InetAddress node_id, int port) {
         TCPServer server = new TCPServer(port, node_id);
         new Thread(server).start();
-        System.out.println("this is the new verison");
+        System.out.println("Receiving messages from another nodes");
 
     }
 }

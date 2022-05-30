@@ -24,6 +24,10 @@ public class MessageHandler {
 
             writer.println("hello to you too, " + clientIp.getHostAddress());
         }
+
+        if(message.startsWith("join")) {
+            writer.println("join message received");
+        }
     }
 
 
