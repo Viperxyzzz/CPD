@@ -1,5 +1,6 @@
 package servers;
 
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
@@ -10,11 +11,13 @@ public class TCPServer implements Runnable{
 
     protected int          serverPort   = 8080;
     protected ServerSocket serverSocket = null;
+    protected InetAddress node_id = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
-    public TCPServer(int port){
+    public TCPServer(int port, InetAddress node_id){
+        this.node_id = node_id;
         this.serverPort = port;
     }
 

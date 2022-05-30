@@ -3,6 +3,7 @@ import org.junit.*;
 import servers.*;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
@@ -13,8 +14,9 @@ public class TCPTest {
     TCPServer server;
 
     @Before
-    public void setup() {
-        server = new TCPServer(9000);
+    public void setup() throws UnknownHostException {
+        InetAddress node_id = InetAddress.getByName("localhost");
+        server = new TCPServer(9000, node_id);
     }
 
     @Test
