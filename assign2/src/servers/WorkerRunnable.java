@@ -18,18 +18,9 @@ public class WorkerRunnable implements Runnable{
 
     public void run() {
         try {
-            InputStream input = clientSocket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-
-            String message = reader.readLine();
-
-            System.out.println("Received a message: "+ message);
-
             if (testClient) {
-                messageHandler = new MessageHandlerTestClient(message,clientSocket);
-            } else { messageHandler = new MessageHandlerNodes(message,clientSocket);}
-
-            messageHandler = new MessageHandler(message, clientSocket);
+                messageHandler = new MessageHandlerTestClient(clientSocket);
+            } else { messageHandler = new MessageHandlerNodes(clientSocket);}
 
         } catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());

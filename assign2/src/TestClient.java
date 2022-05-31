@@ -1,5 +1,12 @@
+import servers.Message;
+import servers.Utils;
+
 import java.net.*;
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
+import java.util.Scanner;
+import java.net.Socket;
+
 
 /**
  * This program demonstrates a simple TCP/IP socket client.
@@ -16,20 +23,33 @@ public class TestClient {
         String hostname = hostnameAndPort[0];
         int port = Integer.parseInt(hostnameAndPort[1]);
         String operation = args[1];
-        if (args.length == 3) {String opnd = args[2];}
-
+        String opnd = "ERROR";
+        if (args.length == 3) {opnd = args[2];}
+        System.out.println("before");
         try (Socket socket = new Socket(hostname, port)) {
+            System.out.println("after");
 
-            OutputStream output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
-            writer.println(operation.toString());
+            switch(operation){
+                case "put":
+                    put(opnd ,hostname,port, socket);
+                    return;
+                case "get":
+                    get(opnd,hostname,port, socket);
+                    return;
+                case "delete":
+                    delete(opnd,hostname,port, socket);
+                    return;
+                default:
+                    System.out.println("Not implemented");
+                    break;
+            }
 
             InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 
-            String time = reader.readLine();
+            String receivedMessage = reader.readLine();
 
-            System.out.println(time);
+            System.out.println(receivedMessage);
 
 
         } catch (UnknownHostException ex) {
@@ -41,4 +61,44 @@ public class TestClient {
             System.out.println("I/O error: " + ex.getMessage());
         }
     }
+
+
+    public static String getFileContent(String filepath) throws FileNotFoundException {
+        StringBuilder message = new StringBuilder();
+        File file = new File("test.txt");
+        Scanner myScanner = new Scanner(file);
+        while(myScanner.hasNextLine()){
+            String line = myScanner.nextLine();
+            message.append(line).append("\n");
+        }
+        myScanner.close();
+        return message.toString();
+
+    }
+
+    public static int put(String filepath,String hostname, int port , Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        String message = getFileContent(filepath);
+        String key = Utils.sha256(message);
+        System.out.println("MESSAGE : \n " + message);
+        System.out.println("KEY = " + key);
+        out.println(Message.createPutMessage(key,message));
+        return 0;
+    }
+
+    public static int get(String key, String hostname, int port , Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        out.println(Message.createGetMessage(key));
+        return 0;
+    }
+
+    public static int delete(String key, String hostname, int port , Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        out.println(Message.createDeleteMessage(key));
+        return 0;
+    }
+
 }
