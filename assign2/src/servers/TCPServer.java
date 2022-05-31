@@ -15,10 +15,12 @@ public class TCPServer implements Runnable{
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
     protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    protected Boolean testClient;
 
-    public TCPServer(int port, InetAddress node_id){
+    public TCPServer(int port, InetAddress node_id, Boolean testClient){
         this.node_id = node_id;
         this.serverPort = port;
+        this.testClient = testClient;
     }
 
     public void run(){
@@ -38,9 +40,7 @@ public class TCPServer implements Runnable{
                 throw new RuntimeException(
                         "Error accepting client connection", e);
             }
-            this.threadPool.execute(
-                    new WorkerRunnable(clientSocket,
-                            "Thread Pooled Server"));
+            this.threadPool.execute( new WorkerRunnable(clientSocket, this.testClient));
         }
         this.threadPool.shutdown();
         System.out.println("Server Stopped.") ;

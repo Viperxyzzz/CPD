@@ -19,22 +19,22 @@ public class Store {
         int port = Integer.parseInt(args[3]);
 
         startTCP(node_id, port);
-        starTCPforTestClient(node_id,port);
+        startTCPforTestClient(node_id,port);
 
         //System.out.println("Stopping Server");
         //server.stop();
 
     }
 
-    private static void starTCPforTestClient(InetAddress node_id, int port) {
-        TCPServer server = new TCPServer(port+1000, node_id);
+    private static void startTCPforTestClient(InetAddress node_id, int port) {
+        TCPServer server = new TCPServer(port+1000, node_id, true);
         new Thread(server).start();
         System.out.println("Receiving messages from test client");
 
     }
 
     private static void startTCP(InetAddress node_id, int port) {
-        TCPServer server = new TCPServer(port, node_id);
+        TCPServer server = new TCPServer(port, node_id, false);
         new Thread(server).start();
         System.out.println("Receiving messages from another nodes");
 
