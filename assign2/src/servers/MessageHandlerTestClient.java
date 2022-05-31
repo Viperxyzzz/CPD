@@ -90,7 +90,7 @@ public class MessageHandlerTestClient extends MessageHandler{
     }
 
 
-    private void handleMessage() throws IOException {
+    protected void handleMessage() throws IOException {
 
         BufferedReader bis = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         String inputLine;

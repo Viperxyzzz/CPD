@@ -7,14 +7,10 @@ public class MessageHandlerNodes extends MessageHandler {
     public MessageHandlerNodes(Socket clientSocket) throws IOException {
         super(clientSocket);
     }
-    /*
-    private void handleMessage() {
-        if (message.startsWith("hello")) {
 
-            writer.println("hello to you too, " + clientIp.getHostAddress());
-        }
+    @Override
+    protected void handleMessage() throws IOException {
+
     }
-
-     */
 }
 
