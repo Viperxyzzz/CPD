@@ -12,8 +12,12 @@ public class NodeStore {
     String foldername;
     public NodeStore(String foldername){
         this.foldername = foldername;
-        if(!(new File(foldername).mkdir())){ ;
-            System.out.println("Failed to initialize folder!");
+        File file = new File(foldername);
+        if (file.exists()) {
+            System.out.println("Using folder " + foldername);
+        }
+        else{
+            file.mkdir();
         }
     }
     public void put(String key, String value) throws IOException {
@@ -31,10 +35,10 @@ public class NodeStore {
 
         while(myReader.hasNextLine()){
             String data = myReader.nextLine();
-            message.append(data);
+            message.append(data).append("\n");
         }
         myReader.close();
-
+        message.append("\n");
         return message.toString();
     }
 

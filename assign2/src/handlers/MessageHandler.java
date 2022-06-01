@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 
-public abstract class MessageHandler {
+public class MessageHandler {
     Socket clientSocket;
     PrintWriter writer; // if you want to answer to the received message write here
     InetAddress clientIp; // useful in debuggin to know who you are talking to
@@ -17,7 +17,9 @@ public abstract class MessageHandler {
         this.handleMessage();
     }
 
-    protected abstract void handleMessage() throws IOException;
+    private void handleMessage() throws IOException{
+
+    }
 
 
 }

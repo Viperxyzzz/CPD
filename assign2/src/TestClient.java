@@ -78,7 +78,6 @@ public class TestClient {
         PrintWriter out = new PrintWriter(outstream,true);
         String message = getFileContent(filepath);
         String key = Utils.sha256(message);
-        System.out.println("MESSAGE : \n " + message);
         System.out.println("KEY = " + key);
         out.println(Message.createPutMessage(key,message));
         return 0;
@@ -88,6 +87,14 @@ public class TestClient {
         OutputStream outstream = socket.getOutputStream();
         PrintWriter out = new PrintWriter(outstream,true);
         out.println(Message.createGetMessage(key));
+        InputStreamReader isr = new InputStreamReader(socket.getInputStream());
+        BufferedReader br = new BufferedReader(isr);
+        StringBuilder message = new StringBuilder();
+        message.append(br.readLine()).append("\n");
+        while(br.ready()){
+            message.append(br.readLine()).append("\n");
+        }
+        System.out.println("Message addressed to the given key is \n " + message.toString());
         return 0;
     }
 
