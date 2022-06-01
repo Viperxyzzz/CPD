@@ -1,13 +1,17 @@
+import servers.MessageSenderTCP;
 import servers.TCPServer;
-import servers.UDPClient;
-import servers.UDPServer;
+
+import data.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import static java.lang.Thread.sleep;
+
 public class Store {
 
-    public static void main(String[] args) throws UnknownHostException {
+    public static void main(String[] args) throws UnknownHostException, InterruptedException {
+
 
         if (args.length < 4) {
             System.out.println("You should provide 4 arguments: <multicastIP> <multicastPort> <node_id>  <Store_port>");
@@ -15,28 +19,38 @@ public class Store {
         }
         InetAddress multicastIP = InetAddress.getByName(args[0]);
         int multicastPort = Integer.parseInt(args[1]);
-        InetAddress node_id = InetAddress.getByName(args[2]);
-        int port = Integer.parseInt(args[3]);
+        InetAddress nodeId = InetAddress.getByName(args[2]);
+        int nodePort = Integer.parseInt(args[3]);
 
-        startTCP(node_id, port);
-        startTCPforTestClient(node_id,port);
+        StoreData storeData = new StoreData(multicastIP,multicastPort,nodeId,nodePort);
 
-        //System.out.println("Stopping Server");
-        //server.stop();
+        startTCP(nodeId, nodePort);
+        startTCPforTestClient(nodeId,nodePort);
+
+        /*
+        sleep(10*1000);
+        System.out.println("sending message to another node");
+        MessageSenderTCP test = new MessageSenderTCP(nodePort+1, nodeId, "ola node");
+        new Thread(test).start();
+        ESTE EXEMPLO ENVIA OLA NODE PARA O NODE COM A PORTA A SEGUIR À DESTE NODE
+         */
+
+
+
 
     }
 
     private static void startTCPforTestClient(InetAddress node_id, int port) {
         TCPServer server = new TCPServer(port+1000, node_id, true);
         new Thread(server).start();
-        System.out.println("Receiving messages from test client");
+        System.out.println("Receiving messages from test client on port " + (port+1000));
 
     }
 
     private static void startTCP(InetAddress node_id, int port) {
         TCPServer server = new TCPServer(port, node_id, false);
         new Thread(server).start();
-        System.out.println("Receiving messages from another nodes");
+        System.out.println("Receiving messages from another nodes on port " + port);
 
     }
 }

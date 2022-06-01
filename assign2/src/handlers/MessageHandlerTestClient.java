@@ -1,14 +1,18 @@
-package servers;
+package handlers;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
 import java.util.TreeMap;
+
+import utility.Utils;
+
+import data.NodeStore;
+import data.StoreData;
 
 public class MessageHandlerTestClient extends MessageHandler{
 
@@ -17,8 +21,12 @@ public class MessageHandlerTestClient extends MessageHandler{
     private int port;
     private NodeStore store;
     private ServerSocket clientServer;
+    private StoreData data;
 
-    private TreeMap<String,String> nodes = new TreeMap<>();
+
+
+
+    private TreeMap<String,String> nodes = data.nodes;
     /**
      * Todos os nodes conhecidos pelo node
      */
@@ -28,8 +36,8 @@ public class MessageHandlerTestClient extends MessageHandler{
         this.id = String.valueOf(clientSocket.getInetAddress());
         this.port = clientSocket.getLocalPort();
         this.store = new NodeStore(Utils.sha256(this.id));
-        nodes.put(Utils.sha256(id),id);
         this.handleMessage();
+        this.data = new StoreData();
     }
 
     public void putNodes(Map<String, String> nodes){
@@ -96,8 +104,6 @@ public class MessageHandlerTestClient extends MessageHandler{
         String inputLine;
         inputLine = bis.readLine();
         String key = bis.readLine();
-
-        System.out.println(inputLine);
 
         switch(inputLine){
             case "put":

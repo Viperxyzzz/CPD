@@ -1,5 +1,6 @@
-package servers;
+package utility;
 
+import servers.*;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

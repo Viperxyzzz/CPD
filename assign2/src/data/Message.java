@@ -1,4 +1,4 @@
-package servers;
+package data;
 
 public class Message {
 

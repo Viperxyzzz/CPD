@@ -1,9 +1,8 @@
-import servers.Message;
-import servers.Utils;
+import data.Message;
+import utility.Utils;
 
 import java.net.*;
 import java.io.*;
-import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import java.net.Socket;
 
@@ -25,9 +24,7 @@ public class TestClient {
         String operation = args[1];
         String opnd = "ERROR";
         if (args.length == 3) {opnd = args[2];}
-        System.out.println("before");
         try (Socket socket = new Socket(hostname, port)) {
-            System.out.println("after");
 
             switch(operation){
                 case "put":
@@ -49,7 +46,7 @@ public class TestClient {
 
             String receivedMessage = reader.readLine();
 
-            System.out.println(receivedMessage);
+            System.out.println("received message: " + receivedMessage);
 
 
         } catch (UnknownHostException ex) {
