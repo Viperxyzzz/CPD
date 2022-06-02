@@ -14,35 +14,25 @@ import utility.Utils;
 import data.NodeStore;
 import data.StoreData;
 
-public class MessageHandlerTestClient extends MessageHandler{
+public class MessageHandlerTestClient extends MessageHandler {
 
-    private  String id;
-    private  String host;
-    private int port;
+
     private NodeStore store;
-    private ServerSocket clientServer;
-    private StoreData data;
-
-
-
-
-    private TreeMap<String,String> nodes = data.nodes;
-    /**
-     * Todos os nodes conhecidos pelo node
-     */
 
     public MessageHandlerTestClient(Socket clientSocket) throws IOException {
         super(clientSocket);
-        this.id = String.valueOf(clientSocket.getInetAddress());
-        this.port = clientSocket.getLocalPort();
+
+
         this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
-        this.data = new StoreData();
+
+        // TODO --- ISTO N PODE ESTAR AQUI SE NÃO O TESTCLIENT SERÁ ERRADAMENTE ASSUMIDO COMO UM NODE, tem que estar no MessageHandlerNode
         this.data.nodes.put(Utils.sha256(Integer.toString(this.port)),Integer.toString(this.port));
+
+
         System.out.println("PORT " + this.port);
         if(port == 1080){
             this.data.nodes.put("ab9828ca390581b72629069049793ba3c99bb8e5e9e7b97a55c71957e04df9a3","1100");
         }
-        this.handleMessage();
     }
 
     public void putNodes(Map<String, String> nodes){
@@ -152,6 +142,7 @@ public class MessageHandlerTestClient extends MessageHandler{
                 break;
             case "join":
                 System.out.println("received join message");
+                break;
             default:
                 System.out.println(inputLine + " not implemented");
                 break;

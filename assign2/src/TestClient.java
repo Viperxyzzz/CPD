@@ -38,6 +38,7 @@ public class TestClient {
                     return;
                 case "join":
                     join(socket);
+                    break;
                 default:
                     System.out.println("Not implemented");
                     break;
