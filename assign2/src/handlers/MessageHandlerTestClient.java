@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import data.Message;
 import servers.MessageSenderTCP;
 
+import servers.MessageSenderUDP;
 import utility.Utils;
 
 import data.NodeStore;
@@ -23,24 +24,25 @@ public class MessageHandlerTestClient extends MessageHandler {
         super(clientSocket);
 
 
-        this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
+        //this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
 
         // TODO --- ISTO N PODE ESTAR AQUI SE NÃO O TESTCLIENT SERÁ ERRADAMENTE ASSUMIDO COMO UM NODE, tem que estar no MessageHandlerNode
+        /*
         this.data.nodes.put(Utils.sha256(Integer.toString(this.port)),Integer.toString(this.port));
-
-
         System.out.println("PORT " + this.port);
         if(port == 1080){
             this.data.nodes.put("ab9828ca390581b72629069049793ba3c99bb8e5e9e7b97a55c71957e04df9a3","1100");
         }
+
+         */
     }
 
     public void putNodes(Map<String, String> nodes){
-        this.data.nodes.putAll(nodes);
+        this.nodes.putAll(nodes);
     }
 
     public void putNode(String id, String host){
-        this.data.nodes.put(Utils.sha256(Integer.toString(this.port)),Integer.toString(this.port));
+        this.nodes.put(Utils.sha256(Integer.toString(this.port)),Integer.toString(this.port));
     }
 
     public String getId() {
@@ -49,10 +51,10 @@ public class MessageHandlerTestClient extends MessageHandler {
 
     public int put(String key, String value) throws IOException {
 
-        if(this.data.nodes != null){
-            Map.Entry<String,String> closest = this.data.nodes.ceilingEntry(key);
+        if(this.nodes != null){
+            Map.Entry<String,String> closest = this.nodes.ceilingEntry(key);
             if(closest == null){
-                closest = this.data.nodes.firstEntry();
+                closest = this.nodes.firstEntry();
 
             }
             if((Integer.toString(this.port)).equals(closest.getValue())){
@@ -76,7 +78,7 @@ public class MessageHandlerTestClient extends MessageHandler {
         }
         else{
             System.out.println("Key not found, redirecting it ");
-            Map.Entry<String,String> closest = this.data.nodes.ceilingEntry(key);
+            Map.Entry<String,String> closest = this.nodes.ceilingEntry(key);
             Socket socket = new Socket(clientSocket.getInetAddress(), Integer.parseInt(closest.getValue()));
             OutputStream outstream = socket.getOutputStream();
             PrintWriter out = new PrintWriter(outstream,true);
@@ -110,6 +112,12 @@ public class MessageHandlerTestClient extends MessageHandler {
         return "";
     }
 
+    protected void join() throws IOException {
+        MessageSenderUDP test = new MessageSenderUDP( StoreData.multicastIP,StoreData.multicastPort);
+        String message = Message.createJoinMessage(StoreData.nodePort);
+        test.multicast(message);
+    }
+
 
     protected void handleMessage() throws IOException {
 
@@ -141,7 +149,7 @@ public class MessageHandlerTestClient extends MessageHandler {
                 this.delete(key);
                 break;
             case "join":
-                System.out.println("received join message");
+                this.join();
                 break;
             default:
                 System.out.println(inputLine + " not implemented");

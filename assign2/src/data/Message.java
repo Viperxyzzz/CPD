@@ -2,9 +2,10 @@ package data;
 
 public class Message {
 
-    public static String createJoinMessage() {
+    public static String createJoinMessage(int port) {
         StringBuilder message = new StringBuilder();
         message.append("join\n");
+        message.append(Integer.toString(port));
         return message.toString();
     }
 

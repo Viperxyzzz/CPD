@@ -14,9 +14,8 @@ public abstract class MessageHandler {
     InetAddress clientIp; // useful in debuggin to know who you are talking to
     String id;
     int port;
-    StoreData data;
 
-    private TreeMap<String,String> nodes;
+    TreeMap<String,String> nodes;
     /**
      * Todos os nodes conhecidos pelo node
      */
@@ -28,8 +27,7 @@ public abstract class MessageHandler {
         this.clientIp = clientSocket.getInetAddress();
         this.id = String.valueOf(this.clientSocket.getInetAddress());
         this.port = clientSocket.getLocalPort();
-        this.data = new StoreData();
-        this.nodes = this.data.nodes;
+        this.nodes = StoreData.nodes;
         this.handleMessage();
     }
 

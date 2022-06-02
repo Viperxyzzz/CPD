@@ -1,49 +1,44 @@
 package servers;
 
+import handlers.MessageHandlerNodes;
+import handlers.UDPHandler;
+
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
 
 public class UDPServer extends Thread {
 
-    private DatagramSocket socket;
+    private MulticastSocket socket;
     private boolean running;
     private byte[] buf = new byte[256];
+    InetAddress group = null;
 
-    public UDPServer() throws SocketException {
-        socket = new DatagramSocket(4445);
+    public UDPServer(InetAddress multicastIP, int multicastPort) throws IOException {
+        socket = new MulticastSocket(multicastPort);
+        group = multicastIP;
     }
 
     public void run() {
-        running = true;
 
-        while (running) {
-            DatagramPacket packet
-                    = new DatagramPacket(buf, buf.length);
-            try {
+        System.out.println("receiving udp messages in port " + this.socket.getLocalPort() + " of ip " + this.socket.getLocalAddress().getHostAddress());
+
+
+        try {
+            socket.joinGroup(group);
+
+
+            while (true) {
+                DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
-            InetAddress address = packet.getAddress();
-            int port = packet.getPort();
-            packet = new DatagramPacket(buf, buf.length, address, port);
-            String received
-                    = new String(packet.getData(), 0, packet.getLength());
+                String message = new String(packet.getData(), 0, packet.getLength());
 
-            if (received.equals("end")) {
-                running = false;
-                continue;
+                new UDPHandler(message);
             }
-            try {
-                socket.send(packet);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //socket.leaveGroup(group);
+            //socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        socket.close();
     }
 }

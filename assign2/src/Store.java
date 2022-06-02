@@ -1,16 +1,20 @@
 import servers.MessageSenderTCP;
+import servers.MessageSenderUDP;
 import servers.TCPServer;
 
 import data.*;
+import servers.UDPServer;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import static java.lang.Thread.sleep;
 
 public class Store {
 
-    public static void main(String[] args) throws UnknownHostException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
 
         if (args.length < 4) {
@@ -26,20 +30,19 @@ public class Store {
 
         startTCP(nodeId, nodePort);
         startTCPforTestClient(nodeId,nodePort);
-
-        /*
-        sleep(10*1000);
-        System.out.println("sending message to another node");
-        MessageSenderTCP test = new MessageSenderTCP(nodePort+1, nodeId, "ola node");
-        new Thread(test).start();
-        //ESTE EXEMPLO ENVIA OLA NODE PARA O NODE COM A PORTA A SEGUIR À DESTE NODE
-
-         */
+        startUDP( multicastIP, multicastPort);
 
 
 
 
 
+
+
+
+    }
+
+    private static void startUDP(InetAddress multicastIP, int multicastPort) throws IOException {
+        new UDPServer(multicastIP, multicastPort).start();
     }
 
     private static void startTCPforTestClient(InetAddress node_id, int port) {

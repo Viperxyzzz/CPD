@@ -11,16 +11,17 @@ public class StoreData {
     public static int multicastPort;
     public static InetAddress nodeId;
     public static int nodePort;
+    public static int nodePortTestClient;
+
 
     public static TreeMap<String,String> nodes = new TreeMap<>();
-
-    public StoreData() {}
 
     public StoreData(InetAddress multicastIP, int multicastPort, InetAddress nodeId , int nodePort) {
         this.multicastIP = multicastIP;
         this.multicastPort = multicastPort;
         this.nodeId = nodeId;
         this.nodePort = nodePort;
+        this.nodePortTestClient = nodePort + 1000;
     }
 
     public void putNodes(Map<String, String> nodes){

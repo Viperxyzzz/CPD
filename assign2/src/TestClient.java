@@ -44,12 +44,16 @@ public class TestClient {
                     break;
             }
 
+            // TODO THIS CANT BE HERE BECAUSE SOME CASES DO NOT REQUIRE RESPONSE, FOR EXAMPLE JOIN
+            /*
             InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 
             String receivedMessage = reader.readLine();
 
             System.out.println("received message: " + receivedMessage);
+            
+             */
 
 
         } catch (UnknownHostException ex) {
@@ -80,7 +84,7 @@ public class TestClient {
     public static void join(Socket socket) throws IOException {
         OutputStream outstream = socket.getOutputStream();
         PrintWriter out = new PrintWriter(outstream,true);
-        String message = Message.createJoinMessage();
+        String message = "join";
         out.println(message);
     }
 
