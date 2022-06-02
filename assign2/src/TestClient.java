@@ -36,6 +36,8 @@ public class TestClient {
                 case "delete":
                     delete(opnd,hostname,port, socket);
                     return;
+                case "join":
+                    join(socket);
                 default:
                     System.out.println("Not implemented");
                     break;
@@ -60,6 +62,7 @@ public class TestClient {
     }
 
 
+
     public static String getFileContent(String filepath) throws FileNotFoundException {
         StringBuilder message = new StringBuilder();
         File file = new File("test.txt");
@@ -71,6 +74,13 @@ public class TestClient {
         myScanner.close();
         return message.toString();
 
+    }
+
+    public static void join(Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        String message = Message.createJoinMessage();
+        out.println(message);
     }
 
     public static int put(String filepath,String hostname, int port , Socket socket) throws IOException {

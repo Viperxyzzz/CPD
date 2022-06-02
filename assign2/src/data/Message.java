@@ -2,6 +2,12 @@ package data;
 
 public class Message {
 
+    public static String createJoinMessage() {
+        StringBuilder message = new StringBuilder();
+        message.append("join\n");
+        return message.toString();
+    }
+
     public static String createPutMessage(String key, String value){
         StringBuilder code = new StringBuilder();
 

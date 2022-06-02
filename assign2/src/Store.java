@@ -32,8 +32,10 @@ public class Store {
         System.out.println("sending message to another node");
         MessageSenderTCP test = new MessageSenderTCP(nodePort+1, nodeId, "ola node");
         new Thread(test).start();
-        ESTE EXEMPLO ENVIA OLA NODE PARA O NODE COM A PORTA A SEGUIR À DESTE NODE
+        //ESTE EXEMPLO ENVIA OLA NODE PARA O NODE COM A PORTA A SEGUIR À DESTE NODE
+        
          */
+
 
 
 

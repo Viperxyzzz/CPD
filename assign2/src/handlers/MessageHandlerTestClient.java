@@ -150,6 +150,8 @@ public class MessageHandlerTestClient extends MessageHandler{
             case "delete":
                 this.delete(key);
                 break;
+            case "join":
+                System.out.println("received join message");
             default:
                 System.out.println(inputLine + " not implemented");
                 break;

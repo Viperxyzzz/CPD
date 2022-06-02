@@ -10,7 +10,6 @@ public class MessageHandlerNodes extends MessageHandler {
         super(clientSocket);
     }
 
-    /*
     protected void handleMessage() throws IOException {
         BufferedReader bis = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         String inputLine;
@@ -22,6 +21,6 @@ public class MessageHandlerNodes extends MessageHandler {
                 System.out.println("message received:" + inputLine);
         }
 
-    }*/
+    }
 }
 
