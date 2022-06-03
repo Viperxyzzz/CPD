@@ -1,6 +1,8 @@
 package handlers;
 
+import data.NodeStore;
 import data.StoreData;
+import utility.Utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,6 +16,9 @@ public abstract class MessageHandler {
     InetAddress clientIp; // useful in debuggin to know who you are talking to
     String id;
     int port;
+    NodeStore store;
+
+
 
     TreeMap<String,String> nodes;
     /**
@@ -28,6 +33,7 @@ public abstract class MessageHandler {
         this.id = String.valueOf(this.clientSocket.getInetAddress());
         this.port = clientSocket.getLocalPort();
         this.nodes = StoreData.nodes;
+        this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
         this.handleMessage();
     }
 

@@ -18,11 +18,8 @@ import data.StoreData;
 public class MessageHandlerTestClient extends MessageHandler {
 
 
-    private NodeStore store;
-
     public MessageHandlerTestClient(Socket clientSocket) throws IOException {
         super(clientSocket);
-
 
         //this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
 
@@ -50,17 +47,23 @@ public class MessageHandlerTestClient extends MessageHandler {
     }
 
     public int put(String key, String value) throws IOException {
-
-        if(this.nodes != null){
-            Map.Entry<String,String> closest = this.nodes.ceilingEntry(key);
+        var nodeStore = StoreData.getKnownNodes();
+        if(nodeStore != null){
+            Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
             if(closest == null){
-                closest = this.nodes.firstEntry();
+                closest = nodeStore.firstEntry();
+                System.out.println("?");
 
             }
+            System.out.println("HERE");
+            System.out.println("CLOSEST GET VALUE : " + closest.getValue());
+            System.out.println("PORT : " + this.port);
             if((Integer.toString(this.port)).equals(closest.getValue())){
                 this.store.put(key,value);
             }
             else{
+                System.out.println("debug");
+
                 MessageSenderTCP test = new MessageSenderTCP(Integer.parseInt(closest.getValue()), clientSocket.getInetAddress(), Message.createPutMessage(key,value));
                 new Thread(test).start();
             }
@@ -77,8 +80,9 @@ public class MessageHandlerTestClient extends MessageHandler {
             return store.get(key);
         }
         else{
+            var nodeStore = StoreData.getKnownNodes();
             System.out.println("Key not found, redirecting it ");
-            Map.Entry<String,String> closest = this.nodes.ceilingEntry(key);
+            Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
             Socket socket = new Socket(clientSocket.getInetAddress(), Integer.parseInt(closest.getValue()));
             OutputStream outstream = socket.getOutputStream();
             PrintWriter out = new PrintWriter(outstream,true);
