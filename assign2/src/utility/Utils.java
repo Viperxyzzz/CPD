@@ -1,6 +1,9 @@
 package utility;
 
 import servers.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -24,6 +27,18 @@ public class Utils {
         } catch(Exception ex){
             throw new RuntimeException(ex);
         }
+    }
+
+    public static String BufferedToString(BufferedReader bufferedReader) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            stringBuilder.append(line);
+        }
+
+        String str = stringBuilder.toString();
+        return str;
     }
 }
 

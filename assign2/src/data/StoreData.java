@@ -1,11 +1,14 @@
 package data;
 
+import servers.TCPServer;
+import servers.UDPServer;
 import utility.Utils;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -17,6 +20,8 @@ public class StoreData {
     public static int nodePort;
     public static int nodePortTestClient;
     public static Boolean inCluster;
+    public static int numberOfMembershipMsgReceived;
+    public static ArrayList<BufferedReader> membershipMessages;
 
 
     public static TreeMap<String,String> nodes = new TreeMap<>();
@@ -30,6 +35,8 @@ public class StoreData {
         this.setInitialMembershipCount();
         this.setInitialMembershipLog();
         this.inCluster = false;
+        this.numberOfMembershipMsgReceived = 0;
+        this.membershipMessages = new ArrayList<>();
     }
 
     public static String getMembershipLog(int nodePort) {
@@ -70,12 +77,12 @@ public class StoreData {
         }
     }
 
-    public static void addLogLine(int nodePort, String line) {
+    public static void addLogLine(int nodePort, String line) throws FileNotFoundException {
         try {
             File myObj = new File("Cluster/MembershipLogs/" + Integer.toString(nodePort) + ".txt");
             Writer output;
             output = new BufferedWriter(new FileWriter(myObj, true));
-            output.append("\n" + line);
+            output.append(line);
             output.close();
         } catch (IOException e) {
             System.out.println("ERROR -- THERE IS NO LOG FILE");
@@ -84,7 +91,7 @@ public class StoreData {
     }
 
     public static String getLogLine(InetAddress nodeId, int nodePort, String membershipCount) {
-        String line =  nodeId.getHostAddress() + ":" + nodePort + ";" + membershipCount;
+        String line =  nodeId.getHostAddress() + ":" + nodePort + ";" + membershipCount + "\n";
         return line;
     }
 
@@ -153,6 +160,24 @@ public class StoreData {
 
     public void putNode(String id, String host){
         this.nodes.put(Utils.sha256(id),id);
+    }
+
+    public static void startUDP(InetAddress multicastIP, int multicastPort) throws IOException {
+        new UDPServer(multicastIP, multicastPort).start();
+    }
+
+    public static void startTCPforTestClient(InetAddress node_id, int port) {
+        TCPServer server = new TCPServer(port+1000, node_id, true);
+        new Thread(server).start();
+        //System.out.println("Receiving messages from test client on port " + (port+1000));
+
+    }
+
+    public static void startTCP(InetAddress node_id, int port) {
+        TCPServer server = new TCPServer(port, node_id, false);
+        new Thread(server).start();
+        //System.out.println("Receiving messages from another nodes on port " + port);
+
     }
 
 

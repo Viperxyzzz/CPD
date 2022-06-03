@@ -21,6 +21,7 @@ public class Store {
             System.out.println("You should provide 4 arguments: <multicastIP> <multicastPort> <node_id>  <Store_port>");
             return;
         }
+
         InetAddress multicastIP = InetAddress.getByName(args[0]);
         int multicastPort = Integer.parseInt(args[1]);
         InetAddress nodeId = InetAddress.getByName(args[2]);
@@ -28,35 +29,7 @@ public class Store {
 
         StoreData storeData = new StoreData(multicastIP,multicastPort,nodeId,nodePort);
 
-        startTCP(nodeId, nodePort);
-        startTCPforTestClient(nodeId,nodePort);
-        startUDP( multicastIP, multicastPort);
-
-
-
-
-
-
-
-
-
-    }
-
-    private static void startUDP(InetAddress multicastIP, int multicastPort) throws IOException {
-        new UDPServer(multicastIP, multicastPort).start();
-    }
-
-    private static void startTCPforTestClient(InetAddress node_id, int port) {
-        TCPServer server = new TCPServer(port+1000, node_id, true);
-        new Thread(server).start();
-        System.out.println("Receiving messages from test client on port " + (port+1000));
-
-    }
-
-    private static void startTCP(InetAddress node_id, int port) {
-        TCPServer server = new TCPServer(port, node_id, false);
-        new Thread(server).start();
-        System.out.println("Receiving messages from another nodes on port " + port);
+        storeData.startTCPforTestClient(nodeId,nodePort);
 
     }
 }
