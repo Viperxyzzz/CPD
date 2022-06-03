@@ -27,6 +27,16 @@ public class Message {
         return code.toString();
     }
 
+    public static String createPutReplica(String key, String value){
+        StringBuilder code = new StringBuilder();
+
+        code.append("putreplica\n");
+        code.append(key + "\n");
+        code.append(value + "\n");
+        code.append("END").append("\n");
+        return code.toString();
+    }
+
     public static String createGetMessage(String key){
         StringBuilder code = new StringBuilder();
 

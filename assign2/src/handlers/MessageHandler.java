@@ -16,6 +16,7 @@ public abstract class MessageHandler {
     InetAddress clientIp; // useful in debuggin to know who you are talking to
     String id;
     int port;
+    int replicationFactor;
     NodeStore store;
 
 
@@ -34,6 +35,7 @@ public abstract class MessageHandler {
         this.port = clientSocket.getLocalPort();
         this.nodes = StoreData.nodes;
         this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
+        this.replicationFactor = 3;
         this.handleMessage();
     }
 

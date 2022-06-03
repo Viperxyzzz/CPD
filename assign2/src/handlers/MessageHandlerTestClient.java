@@ -46,16 +46,38 @@ public class MessageHandlerTestClient extends MessageHandler {
         return id;
     }
 
+    public int putReplica(String key, String value) throws IOException {
+        this.store.put(key,value);
+        return 0;
+    }
+
     public int put(String key, String value) throws IOException {
         var nodeStore = StoreData.getKnownNodes();
         if(nodeStore != null){
             Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
             if(closest == null){
                 closest = nodeStore.firstEntry();
-                System.out.println("?");
-
             }
             if((Integer.toString(this.port)).equals(closest.getValue())){
+                int replicationFactor = StoreData.getReplicationFactor();
+                replicationFactor--;
+                var saveStore = StoreData.getKnownNodes();
+                Map.Entry<String, String> finalClosest = closest;
+                saveStore.entrySet().removeIf(entry -> entry.getValue().equals(finalClosest.getValue()));
+                System.out.println("REPLICATION FACTOR " + replicationFactor);
+                while(replicationFactor != 0){
+                    System.out.println("SAVE STORE " + saveStore);
+                    var replica = saveStore.ceilingEntry(key);
+                    System.out.println("REPLICA " + replica);
+                    if(replica == null){
+                        replica = saveStore.firstEntry();
+                    }
+                    MessageSenderTCP test = new MessageSenderTCP(Integer.parseInt(replica.getValue()),clientSocket.getInetAddress(), Message.createPutReplica(key,value));
+                    new Thread(test).start();
+                    Map.Entry<String, String> finalReplica = replica;
+                    saveStore.entrySet().removeIf(entry -> entry.getValue().equals(finalReplica.getValue()));
+                    replicationFactor--;
+                }
                 this.store.put(key,value);
             }
             else{
@@ -78,6 +100,27 @@ public class MessageHandlerTestClient extends MessageHandler {
             var nodeStore = StoreData.getKnownNodes();
             System.out.println("Key not found, redirecting it ");
             Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
+            if(closest == null)
+            {
+                closest = nodeStore.firstEntry();
+            }
+            //in case a fault happened
+            if((Integer.toString(this.port)).equals(closest.getValue())) {
+                //we try to find it somewhere
+                Map.Entry<String, String> finalClosest = closest;
+                nodeStore.entrySet().removeIf(entry -> entry.getValue().equals(finalClosest.getValue()));
+                closest = nodeStore.ceilingEntry(key);
+                if(closest == null){
+                    closest = nodeStore.firstEntry();
+                }
+            }
+
+            if(closest == null){
+                //the key wasnt found anywhere else
+                System.out.println("Unable to find the key\n");
+                return "ERROR\n";
+            }
+
             Socket socket = new Socket(clientSocket.getInetAddress(), Integer.parseInt(closest.getValue()));
             OutputStream outstream = socket.getOutputStream();
             PrintWriter out = new PrintWriter(outstream,true);
@@ -153,6 +196,15 @@ public class MessageHandlerTestClient extends MessageHandler {
                 break;
             case "join":
                 this.join();
+                break;
+            case "putreplica":
+                System.out.println("Used as a replica\n");
+                StringBuilder message2 = new StringBuilder();
+                String line2;
+                while(!(line2 = bis.readLine()).equals("END")){ //this will only work if there are no new lines change this
+                    message2.append(line2 + "\n");
+                }
+                this.putReplica(key,message2.toString());
                 break;
             default:
                 System.out.println(inputLine + " not implemented");

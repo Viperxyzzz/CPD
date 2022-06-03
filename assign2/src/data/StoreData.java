@@ -156,8 +156,17 @@ public class StoreData {
         this.nodes.put(Utils.sha256(id),id);
     }
 
+    public static int getReplicationFactor(){
+        int replicationFactor = getKnownNodes().size();
+        if(replicationFactor > 3){
+            return 3;
+        }
+        return replicationFactor;
+    }
+
     public static TreeMap<String, String> getKnownNodes(){
         TreeMap<String,String> curNodes = new TreeMap<>();
+
         File knownNodes = new File("Cluster/MembershipLogs/" + Integer.toString(nodePort) + ".txt");
         try {
             FileReader fileReader = new FileReader(knownNodes);
