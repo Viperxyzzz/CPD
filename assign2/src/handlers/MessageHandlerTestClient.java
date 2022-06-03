@@ -120,6 +120,48 @@ public class MessageHandlerTestClient extends MessageHandler{
         return "";
     }
 
+    protected void leave() throws IOException {
+        StoreData.increaseMembershipCount(StoreData.nodePort);
+        StoreData.startTCP(StoreData.nodeId,StoreData.nodePort);
+        MessageSenderUDP test = new MessageSenderUDP( StoreData.multicastIP,StoreData.multicastPort);
+        String message = Message.createJoinMessage(StoreData.nodePort);
+        test.multicast(message);
+        System.out.println("left cluster");
+
+    }
+
+    protected void join() throws IOException {
+        if(!StoreData.getMembershipCount(StoreData.nodePort).equals("0")) {
+            StoreData.increaseMembershipCount(StoreData.nodePort);
+        }
+
+        StoreData.startTCP(StoreData.nodeId,StoreData.nodePort);
+        MessageSenderUDP test = new MessageSenderUDP( StoreData.multicastIP,StoreData.multicastPort);
+        String message = Message.createJoinMessage(StoreData.nodePort);
+        test.multicast(message);
+
+        try{
+            sleep(500);
+            if(!StoreData.inCluster) {
+                System.out.println("Have not received 3 memberships yet, sending join for the second time");
+                test.multicast(message);
+            }
+            sleep(500);
+            if(!StoreData.inCluster) {
+                System.out.println("Have not received 3 memberships yet, sending join for the third time");
+                test.multicast(message);
+            }
+            sleep(500);
+            if(!StoreData.inCluster) {
+                System.out.println("im the first node, initializing cluster");
+                StoreData.startUDP(StoreData.multicastIP, StoreData.multicastPort);
+                StoreData.inCluster = true;
+                StoreData.setLeader();
+            }
+        } catch (InterruptedException e) {
+        }
+    }
+
 
     protected void handleMessage() throws IOException {
 
@@ -149,6 +191,20 @@ public class MessageHandlerTestClient extends MessageHandler{
                 break;
             case "delete":
                 this.delete(key);
+                break;
+            case "join":
+                this.join();
+                break;
+            case "leave" :
+                this.leave();
+            case "putreplica":
+                System.out.println("Used as a replica");
+                StringBuilder message2 = new StringBuilder();
+                String line2;
+                while(!(line2 = bis.readLine()).equals("END")){ //this will only work if there are no new lines change this
+                    message2.append(line2 + "\n");
+                }
+                this.putReplica(key,message2.toString());
                 break;
             default:
                 System.out.println(inputLine + " not implemented");

@@ -14,7 +14,7 @@ public class NodeStore {
         this.foldername = foldername;
         File file = new File(foldername);
         if (file.exists()) {
-            System.out.println("Using folder " + foldername);
+            //System.out.println("Using folder " + foldername);
         }
         else{
             file.mkdir();

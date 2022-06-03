@@ -36,6 +36,12 @@ public class TestClient {
                 case "delete":
                     delete(opnd,hostname,port, socket);
                     return;
+                case "join":
+                    join(socket);
+                    break;
+                case "leave":
+                    leave(socket);
+                    break;
                 default:
                     System.out.println("Not implemented");
                     break;
@@ -71,6 +77,21 @@ public class TestClient {
         myScanner.close();
         return message.toString();
 
+    }
+
+
+    public static void join(Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        String message = "join";
+        out.println(message);
+    }
+
+    public static void leave(Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        String message = "leave";
+        out.println(message);
     }
 
     public static int put(String filepath,String hostname, int port , Socket socket) throws IOException {
