@@ -57,6 +57,8 @@ public class MessageHandlerTestClient extends MessageHandler {
         var nodeStore = StoreData.getKnownNodes();
         if(nodeStore != null){
             Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
+            //System.out.println("bruh");
+            System.out.println("KEY " + key);
             if(closest == null){
                 closest = nodeStore.firstEntry();
             }
@@ -68,9 +70,9 @@ public class MessageHandlerTestClient extends MessageHandler {
                 saveStore.entrySet().removeIf(entry -> entry.getValue().equals(finalClosest.getValue()));
                 System.out.println("REPLICATION FACTOR " + replicationFactor);
                 while(replicationFactor != 0){
-                    System.out.println("SAVE STORE " + saveStore);
+                    //System.out.println("SAVE STORE " + saveStore);
                     var replica = saveStore.ceilingEntry(key);
-                    System.out.println("REPLICA " + replica);
+                    System.out.println("Replica " + replica);
                     if(replica == null){
                         replica = saveStore.firstEntry();
                     }
@@ -102,6 +104,7 @@ public class MessageHandlerTestClient extends MessageHandler {
             var nodeStore = StoreData.getKnownNodes();
             System.out.println("Key not found, redirecting it ");
             Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
+            //System.out.println("STORE DATA1 " + StoreData.getKnownNodes());
             if(closest == null)
             {
                 closest = nodeStore.firstEntry();
@@ -113,15 +116,18 @@ public class MessageHandlerTestClient extends MessageHandler {
                 nodeStore.entrySet().removeIf(entry -> entry.getValue().equals(finalClosest.getValue()));
                 closest = nodeStore.ceilingEntry(key);
                 if(closest == null){
-                    closest = nodeStore.firstEntry();
+                    System.out.println("Unable to find the key\n");
+                    return "ERROR\n";
                 }
             }
+            //System.out.println("STORE DATA2 " + StoreData.getKnownNodes());
 
             if(closest == null){
-                //the key wasnt found anywhere else
+                //System.out.println("here owo");
                 System.out.println("Unable to find the key\n");
                 return "ERROR\n";
             }
+
 
             Socket socket = new Socket(clientSocket.getInetAddress(), Integer.parseInt(closest.getValue()));
             OutputStream outstream = socket.getOutputStream();
