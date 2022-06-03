@@ -33,14 +33,12 @@ public class MessageHandlerNodes extends MessageHandler {
 
     protected StringBuilder mixLogs(BufferedReader receivedLog) throws IOException {
 
-        System.out.println("starting");
 
         BufferedReader currentLog = StoreData.getMembershipLogBuff(this.port);
         HashMap<Integer,Integer> currentLogMap = StoreData.LogToMap(currentLog);
 
         StringBuilder newLog = new StringBuilder();
 
-        System.out.println("read stuff");
 
         String line = receivedLog.readLine();
         while (line != null) {
