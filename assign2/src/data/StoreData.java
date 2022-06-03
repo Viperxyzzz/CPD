@@ -27,6 +27,7 @@ public class StoreData {
     public static Boolean inCluster;
     public static int numberOfMembershipMsgReceived;
     public static ArrayList<BufferedReader> membershipMessages;
+    public static Boolean isLeader;
 
     public static TreeMap<String,String> nodes = new TreeMap<>();
 
@@ -41,6 +42,7 @@ public class StoreData {
         this.inCluster = false;
         this.numberOfMembershipMsgReceived = 0;
         this.membershipMessages = new ArrayList<>();
+        this.isLeader = false;
     }
 
     public static String getMembershipLog(int nodePort) {
@@ -65,6 +67,12 @@ public class StoreData {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
+    }
+
+    public static void setLeader() throws IOException {
+        isLeader = true;
+        PeriodicLogUDP server = new PeriodicLogUDP();
+        new Thread(server).start();
     }
 
     private void setInitialMembershipLog() {

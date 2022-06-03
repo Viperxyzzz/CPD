@@ -37,6 +37,16 @@ public class Demonstration {
 
         joinnodes();
 
+        sleep(2*1000);
+
+        Runtime.getRuntime().exec("java TestClient 127.0.0.1:10004 leave");
+
+        sleep(2*1000);
+
+        Runtime.getRuntime().exec("java TestClient 127.0.0.1:10004 join");
+
+
+
     }
 
     public static void joinnodes() throws InterruptedException, IOException {
@@ -58,7 +68,6 @@ public class Demonstration {
         sleep(2*1000);
 
         Runtime.getRuntime().exec("java TestClient 127.0.0.1:10005 join");
-        
     }
 
 }

@@ -173,6 +173,16 @@ public class MessageHandlerTestClient extends MessageHandler {
         return "";
     }
 
+    protected void leave() throws IOException {
+        StoreData.increaseMembershipCount(StoreData.nodePort);
+        StoreData.startTCP(StoreData.nodeId,StoreData.nodePort);
+        MessageSenderUDP test = new MessageSenderUDP( StoreData.multicastIP,StoreData.multicastPort);
+        String message = Message.createJoinMessage(StoreData.nodePort);
+        test.multicast(message);
+        System.out.println("left cluster");
+
+    }
+
     protected void join() throws IOException {
         if(!StoreData.getMembershipCount(StoreData.nodePort).equals("0")) {
             StoreData.increaseMembershipCount(StoreData.nodePort);
@@ -199,6 +209,7 @@ public class MessageHandlerTestClient extends MessageHandler {
                 System.out.println("im the first node, initializing cluster");
                 StoreData.startUDP(StoreData.multicastIP, StoreData.multicastPort);
                 StoreData.inCluster = true;
+                StoreData.setLeader();
             }
         } catch (InterruptedException e) {
         }
@@ -238,6 +249,8 @@ public class MessageHandlerTestClient extends MessageHandler {
             case "join":
                 this.join();
                 break;
+            case "leave" :
+                this.leave();
             case "putreplica":
                 System.out.println("Used as a replica\n");
                 StringBuilder message2 = new StringBuilder();

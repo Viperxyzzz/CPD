@@ -35,7 +35,7 @@ public class UDPHandler {
             }
         }
 
-        if(message.startsWith("join")) {
+        if(message.startsWith("join") && (Integer.parseInt(message.split("\n")[2]) % 2 == 0)) {
             int destNodePort = 0;
             int destMembershipCount = -1;
             int i = 0;
@@ -60,12 +60,44 @@ public class UDPHandler {
             message.append("membership\n");
             message.append(StoreData.getMembershipLog(this.port));
             try{
-                sleep((int)(Math.random()*(500-1+1)+1));
+                sleep((int)(Math.random()*(400-1+1)+1));
             } catch (InterruptedException e) {
 
             }
             MessageSenderTCP test = new MessageSenderTCP(destNodePort, StoreData.nodeId, message.toString());
             new Thread(test).start();
+        } else if(message.startsWith("join") && (Integer.parseInt(message.split("\n")[2]) % 2 != 0)) {
+            StringBuilder result = new StringBuilder();
+            var currentLog = StoreData.getMembershipLog(StoreData.nodePort);
+            var currentLogLines = currentLog.split("\n");
+            for (var line : currentLogLines) {
+                var node =  line.split(";")[0].split(":")[1];
+                if (node.equals(message.split("\n")[1])){
+                    int counter = Integer.parseInt(line.split(";")[1]);
+                    int receivedCounter = Integer.parseInt(message.split("\n")[2]);
+                    int newCounter = 0;
+                    if(receivedCounter > counter) {
+                        newCounter = receivedCounter;
+                    } else newCounter = counter;
+                    result.append(line.split(";")[0] + ";" + newCounter + "\n");
+                } else {
+                    result.append(line + "\n");
+                }
+            }
+            StoreData.setMembershipLog(result);
+
+        } else if (message.startsWith("periodicLog")) {
+            scanner = new Scanner(message);
+            StringBuilder newLog = new StringBuilder();
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if(line != "periodicLog" && line != "") {
+                    newLog.append(line + "\n");
+                }
+            }
+            scanner.close();
+            newLog.delete(0,12);
+            StoreData.setMembershipLog(newLog);
         }
 
 

@@ -39,6 +39,9 @@ public class TestClient {
                 case "join":
                     join(socket);
                     break;
+                case "leave":
+                    leave(socket);
+                    break;
                 default:
                     System.out.println("Not implemented");
                     break;
@@ -86,6 +89,13 @@ public class TestClient {
         OutputStream outstream = socket.getOutputStream();
         PrintWriter out = new PrintWriter(outstream,true);
         String message = "join";
+        out.println(message);
+    }
+
+    public static void leave(Socket socket) throws IOException {
+        OutputStream outstream = socket.getOutputStream();
+        PrintWriter out = new PrintWriter(outstream,true);
+        String message = "leave";
         out.println(message);
     }
 
