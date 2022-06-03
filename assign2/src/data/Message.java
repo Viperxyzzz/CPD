@@ -1,11 +1,19 @@
 package data;
 
+import java.io.IOException;
+
 public class Message {
 
     public static String createJoinMessage(int port) {
         StringBuilder message = new StringBuilder();
         message.append("join\n");
-        message.append(Integer.toString(port));
+        message.append(Integer.toString(port) + "\n");
+        try {
+            message.append(StoreData.getMembershipCount(port));
+        }
+        catch (IOException e) {
+        }
+
         return message.toString();
     }
 

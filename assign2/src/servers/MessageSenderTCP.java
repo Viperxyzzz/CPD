@@ -22,7 +22,7 @@ public class MessageSenderTCP implements Runnable{
 
             OutputStream outstream = socket.getOutputStream();
             PrintWriter out = new PrintWriter(outstream,true);
-            System.out.println("sending this message : " + message);
+            System.out.println("sending this message : \n" + message);
             out.println(message);
 
 
