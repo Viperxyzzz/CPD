@@ -55,15 +55,10 @@ public class MessageHandlerTestClient extends MessageHandler {
                 System.out.println("?");
 
             }
-            System.out.println("HERE");
-            System.out.println("CLOSEST GET VALUE : " + closest.getValue());
-            System.out.println("PORT : " + this.port);
             if((Integer.toString(this.port)).equals(closest.getValue())){
                 this.store.put(key,value);
             }
             else{
-                System.out.println("debug");
-
                 MessageSenderTCP test = new MessageSenderTCP(Integer.parseInt(closest.getValue()), clientSocket.getInetAddress(), Message.createPutMessage(key,value));
                 new Thread(test).start();
             }
@@ -110,7 +105,11 @@ public class MessageHandlerTestClient extends MessageHandler {
             }
         }
         else{
-            System.out.println("Key was not found!");
+            var nodeStore = StoreData.getKnownNodes();
+            Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
+            System.out.println("Key was not found, redirecting it to the cluster");
+            MessageSenderTCP test = new MessageSenderTCP(Integer.parseInt(closest.getValue()), clientSocket.getInetAddress(), Message.createDeleteMessage(key));
+            new Thread(test).start();
         }
 
         return "";
