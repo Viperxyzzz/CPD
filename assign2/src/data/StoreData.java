@@ -1,7 +1,6 @@
 package data;
 
-import servers.TCPServer;
-import servers.UDPServer;
+import servers.*;
 import utility.Utils;
 import servers.TCPServer;
 import servers.UDPServer;
