@@ -21,6 +21,7 @@ public class NodeStore {
         }
     }
     public void put(String key, String value) throws IOException {
+        System.out.println("putting file");
         File file = new File(foldername + "/" + key + ".txt");
         file.createNewFile();
         FileWriter fileWriter = new FileWriter(foldername + "/" + key + ".txt");

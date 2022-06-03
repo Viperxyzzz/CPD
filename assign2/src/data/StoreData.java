@@ -4,6 +4,7 @@ import utility.Utils;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -155,5 +156,27 @@ public class StoreData {
         this.nodes.put(Utils.sha256(id),id);
     }
 
+    public static TreeMap<String, String> getKnownNodes(){
+        TreeMap<String,String> curNodes = new TreeMap<>();
+        File knownNodes = new File("Cluster/MembershipLogs/" + Integer.toString(nodePort) + ".txt");
+        try {
+            FileReader fileReader = new FileReader(knownNodes);
+            BufferedReader bis = new BufferedReader(fileReader);
+            String line = bis.readLine();
+            while(line != null){
+                String[] lineArray = line.split(";");
+                String[] id = lineArray[0].split(":");
+                if((Integer.parseInt(lineArray[1]) % 2) == 0)
+                    curNodes.put(Utils.sha256(id[1]),Integer.toString(Integer.parseInt(id[1]) + 1000));
+                line = bis.readLine();
+
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return curNodes;
+    }
 
 }
