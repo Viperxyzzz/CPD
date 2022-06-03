@@ -1,12 +1,14 @@
-#How to run
+# How to run
 
-##Compile
+## Compile
 
 To compile run
 ```
 javac Store.java
 javac TestClient.java
 ```
+
+## Running
 
 A Store should be called using
 ```
