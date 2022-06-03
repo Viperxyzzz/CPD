@@ -113,10 +113,13 @@ public class MessageHandlerTestClient extends MessageHandler {
             if((Integer.toString(this.port)).equals(closest.getValue())) {
                 //we try to find it somewhere
                 Map.Entry<String, String> finalClosest = closest;
+                System.out.println("BEFORE " + finalClosest);
+                System.out.println("NODE STORE " + nodeStore);
                 nodeStore.entrySet().removeIf(entry -> entry.getValue().equals(finalClosest.getValue()));
                 closest = nodeStore.ceilingEntry(key);
+                System.out.println("AFTER " + closest);
                 if(closest == null){
-                    System.out.println("Unable to find the key\n");
+                    System.out.println("Unable to find the key1\n");
                     return "ERROR\n";
                 }
             }
@@ -124,7 +127,7 @@ public class MessageHandlerTestClient extends MessageHandler {
 
             if(closest == null){
                 //System.out.println("here owo");
-                System.out.println("Unable to find the key\n");
+                System.out.println("Unable to find the key2\n");
                 return "ERROR\n";
             }
 
@@ -158,6 +161,10 @@ public class MessageHandlerTestClient extends MessageHandler {
         else{
             var nodeStore = StoreData.getKnownNodes();
             Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
+            if((Integer.toString(this.port)).equals(closest.getValue())) {
+                System.out.println("Failed to find file to delete");
+                return "";
+            }
             System.out.println("Key was not found, redirecting it to the cluster");
             MessageSenderTCP test = new MessageSenderTCP(Integer.parseInt(closest.getValue()), clientSocket.getInetAddress(), Message.createDeleteMessage(key));
             new Thread(test).start();
@@ -209,7 +216,8 @@ public class MessageHandlerTestClient extends MessageHandler {
             case "put":
                 StringBuilder message = new StringBuilder();
                 String line;
-                while(!(line = bis.readLine()).equals("END")){ //this will only work if there are no new lines change this
+                while(bis.ready()){
+                    line = bis.readLine();
                     message.append(line + "\n");
                 }
                 this.put(key,message.toString());
@@ -234,7 +242,8 @@ public class MessageHandlerTestClient extends MessageHandler {
                 System.out.println("Used as a replica\n");
                 StringBuilder message2 = new StringBuilder();
                 String line2;
-                while(!(line2 = bis.readLine()).equals("END")){ //this will only work if there are no new lines change this
+                while(bis.ready()){ //this will only work if there are no new lines change this
+                    line2 = bis.readLine();
                     message2.append(line2 + "\n");
                 }
                 this.putReplica(key,message2.toString());

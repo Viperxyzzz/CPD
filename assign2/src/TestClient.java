@@ -70,7 +70,8 @@ public class TestClient {
 
     public static String getFileContent(String filepath) throws FileNotFoundException {
         StringBuilder message = new StringBuilder();
-        File file = new File("test.txt");
+        //File file = new File("test.txt");
+        File file = new File(filepath);
         Scanner myScanner = new Scanner(file);
         while(myScanner.hasNextLine()){
             String line = myScanner.nextLine();

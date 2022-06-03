@@ -23,7 +23,6 @@ public class Message {
         code.append("put\n");
         code.append(key + "\n");
         code.append(value + "\n");
-        code.append("END").append("\n");
         return code.toString();
     }
 
@@ -33,7 +32,6 @@ public class Message {
         code.append("putreplica\n");
         code.append(key + "\n");
         code.append(value + "\n");
-        code.append("END").append("\n");
         return code.toString();
     }
 
@@ -42,7 +40,6 @@ public class Message {
 
         code.append("get\n");
         code.append(key + "\n");
-        code.append("END\n");
         return code.toString();
     }
 
@@ -51,7 +48,6 @@ public class Message {
 
         code.append("delete\n");
         code.append(key + "\n");
-        code.append("END\n");
         return code.toString();
     }
 }
