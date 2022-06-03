@@ -20,7 +20,7 @@ public class UDPServer extends Thread {
 
     public void run() {
 
-        System.out.println("receiving udp messages in port " + this.socket.getLocalPort() + " of ip " + this.socket.getLocalAddress().getHostAddress());
+        //System.out.println("receiving udp messages in port " + this.socket.getLocalPort() + " of ip " + this.socket.getLocalAddress().getHostAddress());
 
 
         try {
@@ -32,6 +32,7 @@ public class UDPServer extends Thread {
                 socket.receive(packet);
 
                 String message = new String(packet.getData(), 0, packet.getLength());
+
 
                 new UDPHandler(message);
             }

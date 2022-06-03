@@ -19,10 +19,8 @@ public class MessageSenderTCP implements Runnable{
 
     public void run(){
         try (Socket socket = new Socket(node_id, serverPort)) {
-
             OutputStream outstream = socket.getOutputStream();
             PrintWriter out = new PrintWriter(outstream,true);
-            //System.out.println("sending this message : \n" + message);
             out.println(message);
 
 
