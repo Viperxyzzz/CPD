@@ -15,6 +15,8 @@ import utility.Utils;
 import data.NodeStore;
 import data.StoreData;
 
+import static java.lang.Thread.sleep;
+
 public class MessageHandlerTestClient extends MessageHandler {
 
 
@@ -159,9 +161,34 @@ public class MessageHandlerTestClient extends MessageHandler {
     }
 
     protected void join() throws IOException {
+        if(!StoreData.getMembershipCount(StoreData.nodePort).equals("0")) {
+            StoreData.increaseMembershipCount(StoreData.nodePort);
+        }
+
+        StoreData.startTCP(StoreData.nodeId,StoreData.nodePort);
         MessageSenderUDP test = new MessageSenderUDP( StoreData.multicastIP,StoreData.multicastPort);
         String message = Message.createJoinMessage(StoreData.nodePort);
         test.multicast(message);
+
+        try{
+            sleep(500);
+            if(!StoreData.inCluster) {
+                System.out.println("Have not received 3 memberships yet, sending join for the second time");
+                test.multicast(message);
+            }
+            sleep(500);
+            if(!StoreData.inCluster) {
+                System.out.println("Have not received 3 memberships yet, sending join for the third time");
+                test.multicast(message);
+            }
+            sleep(500);
+            if(!StoreData.inCluster) {
+                System.out.println("im the first node, initializing cluster");
+                StoreData.startUDP(StoreData.multicastIP, StoreData.multicastPort);
+                StoreData.inCluster = true;
+            }
+        } catch (InterruptedException e) {
+        }
     }
 
 
