@@ -20,11 +20,8 @@ import static java.lang.Thread.sleep;
 public class MessageHandlerTestClient extends MessageHandler {
 
 
-    private NodeStore store;
-
     public MessageHandlerTestClient(Socket clientSocket) throws IOException {
         super(clientSocket);
-
 
         //this.store = new NodeStore(Utils.sha256(Integer.toString(this.port)));
 
@@ -52,11 +49,12 @@ public class MessageHandlerTestClient extends MessageHandler {
     }
 
     public int put(String key, String value) throws IOException {
-
-        if(this.nodes != null){
-            Map.Entry<String,String> closest = this.nodes.ceilingEntry(key);
+        var nodeStore = StoreData.getKnownNodes();
+        if(nodeStore != null){
+            Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
             if(closest == null){
-                closest = this.nodes.firstEntry();
+                closest = nodeStore.firstEntry();
+                System.out.println("?");
 
             }
             if((Integer.toString(this.port)).equals(closest.getValue())){
@@ -79,8 +77,9 @@ public class MessageHandlerTestClient extends MessageHandler {
             return store.get(key);
         }
         else{
+            var nodeStore = StoreData.getKnownNodes();
             System.out.println("Key not found, redirecting it ");
-            Map.Entry<String,String> closest = this.nodes.ceilingEntry(key);
+            Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
             Socket socket = new Socket(clientSocket.getInetAddress(), Integer.parseInt(closest.getValue()));
             OutputStream outstream = socket.getOutputStream();
             PrintWriter out = new PrintWriter(outstream,true);
@@ -108,7 +107,11 @@ public class MessageHandlerTestClient extends MessageHandler {
             }
         }
         else{
-            System.out.println("Key was not found!");
+            var nodeStore = StoreData.getKnownNodes();
+            Map.Entry<String,String> closest = nodeStore.ceilingEntry(key);
+            System.out.println("Key was not found, redirecting it to the cluster");
+            MessageSenderTCP test = new MessageSenderTCP(Integer.parseInt(closest.getValue()), clientSocket.getInetAddress(), Message.createDeleteMessage(key));
+            new Thread(test).start();
         }
 
         return "";
