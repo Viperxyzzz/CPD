@@ -188,6 +188,10 @@ public class MessageHandlerTestClient extends MessageHandler {
             StoreData.increaseMembershipCount(StoreData.nodePort);
         }
 
+        if(Integer.parseInt(StoreData.getMembershipCount(StoreData.nodePort)) > 0) {
+            System.out.println("rejoining the cluster");
+        }
+
         StoreData.startTCP(StoreData.nodeId,StoreData.nodePort);
         MessageSenderUDP test = new MessageSenderUDP( StoreData.multicastIP,StoreData.multicastPort);
         String message = Message.createJoinMessage(StoreData.nodePort);

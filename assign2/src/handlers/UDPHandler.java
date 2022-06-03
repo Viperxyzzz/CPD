@@ -55,6 +55,20 @@ public class UDPHandler {
             var var = StoreData.LogToMap(StoreData.getMembershipLogBuff(StoreData.nodePort));
             if(!var.containsKey(destNodePort)) {
                 StoreData.addLogLine(this.port, StoreData.getLogLine(StoreData.nodeId, destNodePort, String.valueOf(destMembershipCount)));
+            } else {
+                StringBuilder newLog = new StringBuilder();
+                var currentLog = StoreData.getMembershipLog(StoreData.nodePort);
+                var lines = currentLog.split("\n");
+                for(var line : lines) {
+                    var node =  line.split(";")[0].split(":")[1];
+                    if (node.equals(message.split("\n")[1])){
+                        continue;
+                    } else {
+                        newLog.append(line + "\n");
+                    }
+                }
+                newLog.append(StoreData.getLogLine(StoreData.nodeId, destNodePort, String.valueOf(destMembershipCount)) + "\n");
+                StoreData.setMembershipLog(newLog);
             }
             StringBuilder message = new StringBuilder();
             message.append("membership\n");
