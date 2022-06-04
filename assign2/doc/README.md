@@ -23,3 +23,11 @@ java TestClient <node_ap> <operation> [<opnd>]
 for example
     java TestClient 127.0.0.1:600 put test.txt
 ```
+
+We created a class Called demonstration, it is helpful 
+creating and operating several nodes.
+Right now, it creates 5 nodes, joins all of them and then 
+leaves and rejoins one of them from the cluster.
+```
+java Demonstrate
+```
